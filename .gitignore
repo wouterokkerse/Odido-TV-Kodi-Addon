@@ -8,3 +8,5 @@ cookies.txt
 diagnostics.json
 channel_catalog.json
 iptv_epg/
+iptv_export_*.json
+iptv_pvr.json

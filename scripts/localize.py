@@ -3,6 +3,9 @@ import json
 from pathlib import Path
 
 STRINGS = {
+30082: ('IPTV Simple instance settings saved', 'Instantie-instellingen IPTV Simple opgeslagen'),
+30080: ('Install IPTV Simple Client from Kodi PVR clients first, then retry setup.', 'Installeer eerst IPTV Simple Client via de PVR-clients van Kodi en probeer opnieuw.'),
+30081: ('An IPTV Simple instance is configured for IPTV Manager. Channels and guide will now refresh. Restart Kodi after the refresh if the TV list stays empty.', 'Een IPTV Simple-instantie is ingesteld voor IPTV Manager. Zenders en gids worden nu vernieuwd. Herstart Kodi na het vernieuwen als de tv-lijst leeg blijft.'),
 30079: ('Install and enable IPTV Manager first, then retry.', 'Installeer en activeer eerst IPTV Manager en probeer opnieuw.'),
 30071: ('Check Kodi TV integration', 'Kodi TV-integratie controleren'),
 30072: ('Manager playlist file exists', 'Afspeellijst van Manager aanwezig'),
@@ -16,7 +19,7 @@ STRINGS = {
 30061: ('Enable Kodi TV integration', 'Kodi TV-integratie inschakelen'),
 30062: ('Choose Kodi TV channels', 'Kodi TV-zenders kiezen'),
 30063: ('Enable and refresh channels and guide now', 'Inschakelen en zenders/gids nu vernieuwen'),
-30064: ('Configure IPTV Simple with IPTV Manager', 'IPTV Simple instellen via IPTV Manager'),
+30064: ('Configure IPTV Simple automatically', 'IPTV Simple automatisch instellen'),
 30065: ('Open IPTV Manager settings', 'Instellingen IPTV Manager openen'),
 30066: ('Install IPTV Manager', 'IPTV Manager installeren'),
 30067: ('Replay guide days (including today)', 'Dagen in terugkijkgids (inclusief vandaag)'),

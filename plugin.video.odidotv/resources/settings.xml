@@ -10,7 +10,7 @@
     <setting id="iptv.days" type="select" label="30067" values="1|3|7" default="7"/>
     <setting type="action" label="30066" action="InstallAddon(service.iptv.manager)" visible="!System.HasAddon(service.iptv.manager)"/>
     <setting type="action" label="30065" action="Addon.OpenSettings(service.iptv.manager)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
-    <setting type="action" label="30064" action="RunScript(service.iptv.manager,setup-iptv-simple)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
+    <setting type="action" label="30064" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_setup)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
     <setting type="action" label="30063" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_refresh)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
     <setting type="action" label="30071" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_status)" option="close"/>
     <setting type="lsep" label="30068"/>

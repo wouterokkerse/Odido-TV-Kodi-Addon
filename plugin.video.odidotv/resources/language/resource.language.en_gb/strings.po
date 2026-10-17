@@ -2,6 +2,18 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30082"
+msgid "IPTV Simple instance settings saved"
+msgstr ""
+
+msgctxt "#30080"
+msgid "Install IPTV Simple Client from Kodi PVR clients first, then retry setup."
+msgstr ""
+
+msgctxt "#30081"
+msgid "An IPTV Simple instance is configured for IPTV Manager. Channels and guide will now refresh. Restart Kodi after the refresh if the TV list stays empty."
+msgstr ""
+
 msgctxt "#30079"
 msgid "Install and enable IPTV Manager first, then retry."
 msgstr ""
@@ -55,7 +67,7 @@ msgid "Enable and refresh channels and guide now"
 msgstr ""
 
 msgctxt "#30064"
-msgid "Configure IPTV Simple with IPTV Manager"
+msgid "Configure IPTV Simple automatically"
 msgstr ""
 
 msgctxt "#30065"

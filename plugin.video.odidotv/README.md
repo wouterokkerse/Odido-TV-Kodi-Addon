@@ -1,4 +1,4 @@
-# Odido TV for Kodi — 0.2.1 Kodi TV integration
+# Odido TV for Kodi — 0.2.2 Kodi TV integration
 
 A standalone, unofficial Odido TV addon targeting **Kodi 21.2**.
 
@@ -13,19 +13,20 @@ reached. Updating the addon retains the existing device ID, session and lists.
 
 Playback handling follows the public protocol and redirect behavior documented
 in [wouterokkerse/dut-iptv](https://github.com/wouterokkerse/dut-iptv).
-All **127 automated tests** pass using synthetic API/CDN responses and Kodi
+All **139 automated tests** pass using synthetic API/CDN responses and Kodi
 doubles. The development environment could not run full Kodi/Widevine playback;
 the subscriber's device testing supplies the live-service confirmation.
 
 Download the installable addon:
-[plugin.video.odidotv-0.2.1.zip](downloads/plugin.video.odidotv-0.2.1.zip).
+[plugin.video.odidotv-0.2.2.zip](downloads/plugin.video.odidotv-0.2.2.zip).
 The unpacked Python source is in [plugin.video.odidotv](plugin.video.odidotv),
 with tests and reproducible packaging scripts alongside it. Version 0.2.0 adds
-optional IPTV Manager integration; native Kodi TV operation needs device testing.
+optional IPTV Manager integration; native Kodi TV operation needs device testing. A subscriber has confirmed
+that IPTV Manager receives the channel and guide exports.
 
 ## Install / update
 
-1. Install `plugin.video.odidotv-0.2.1.zip` through **Add-ons → Install from zip
+1. Install `plugin.video.odidotv-0.2.2.zip` through **Add-ons → Install from zip
    file**, over the existing addon. Keep its addon data.
 2. **Fully quit Kodi and start it again.** The updated playback service must be
    restarted; reopening only the addon leaves the old service running.
@@ -69,22 +70,35 @@ exported. A missing catalogue logo uses the addon icon.
    All catalogue channels are selected initially. A smaller selection speeds up
    the first guide import. Cancelling the picker preserves the selection;
    selecting none exports none. **Use all Kodi TV channels** resets it.
-5. Choose **Configure IPTV Simple with IPTV Manager**. IPTV Manager asks before
-   applying its IPTV Simple configuration. Existing playlist/guide settings can
-   be replaced, so retain your current settings if you use another IPTV source.
-6. Choose **Enable and refresh channels and guide now**. The first import can take several
-   minutes. IPTV Manager manages future refreshes in its own settings.
-7. Open Kodi's **TV → Channels / Guide**. If channels do not appear immediately,
-   verify IPTV Simple is enabled and restart Kodi after the import completes.
+5. Choose **Configure IPTV Simple automatically**. Version 0.2.2 saves the
+   playlist and guide paths into an enabled **Odido TV (IPTV Manager)** instance,
+   enables Odido discovery and starts the refresh. The regular **Enable and
+   refresh channels and guide now** button also ensures that instance is configured.
+6. Wait for the import to finish. The first import can take several minutes;
+   subsequent imports reuse cached guide data. IPTV Manager manages later refreshes.
+7. **Restart Kodi after the refresh**, then open **TV → Channels / Guide**.
+   Manager can reload IPTV Simple automatically when its restart setting is
+   enabled; a full restart ensures Kodi discovers the new instance in either case.
 
-On Kodi 21, IPTV Simple can have multiple instances. If the automatic setup does
-not configure the active instance, open **IPTV Simple → Configure → Add/Manage
-addon configuration**, select the intended instance and set its local playlist to
-`special://profile/addon_data/service.iptv.manager/playlist.m3u8` and XMLTV guide to
-`special://profile/addon_data/service.iptv.manager/epg.xml`. Enable catchup in that
-instance for replay links. Keep IPTV Manager's guide timeshift at zero: exported
-programme times include UTC offsets. Configuration labels vary with IPTV Simple
-version. The addon does not directly write IPTV Simple instance files.
+You do not need to enter file paths manually. The native instance uses local
+Manager files (`playlist.m3u8` and `epg.xml`), with UTC guide timeshift zero and
+catchup enabled. Existing instances already pointing to both Manager files can
+be repaired/reused. Other IPTV sources and the legacy global settings.xml are
+preserved. If an existing Manager instance is changed, its original file is
+backed up once with an `.odido.bak` suffix inside the PVR profile.
+
+The setup no longer invokes Manager's legacy setup routine, which writes global
+settings and can copy those settings over multiple instance files. Kodi 21 reads
+`instance-settings-N.xml` for playback; its global settings are for migration.
+The dedicated instance is created/updated idempotently, with the native enabled
+and name fields. It can appear alongside an old, unconfigured **Migrated Add-on
+Config**; that old configuration is preserved rather than overwritten.
+
+If `IPTV_PVR_MIGRATE_FIRST` appears, an unrelated legacy IPTV source exists without
+any saved instance file. Open IPTV Simple once to let Kodi migrate that source,
+then retry Odido setup. This prevents the new instance from hiding an unmigrated
+provider. Setup does not stop active playback itself; restart Kodi after the
+refresh when convenient if automatic reload is disabled or deferred by Manager.
 
 The EPG contains **seven calendar days including today, plus tomorrow** by
 default. Choose 1, 3 or 7 replay-guide days in Odido settings. For programmes
@@ -118,23 +132,25 @@ If importing fails, use **Export diagnostics** in Odido TV and inspect
 `IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
 retain their safe stage code. No raw responses or exception messages are logged.
 
-All 127 unit tests pass. A separate compatibility check ran these payloads through
+All 139 unit tests pass. A separate compatibility check ran these payloads through
 IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
 catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
 could not be run in this workspace; they require testing on your Kodi device.
 
 ## Diagnosing an empty Kodi TV import
 
-Version 0.2.1's **Enable and refresh channels and guide now** explicitly saves
+**Enable and refresh channels and guide now** explicitly saves
 Odido's enabled state and channel/EPG discovery URIs before starting Manager.
 The addon must be signed in and IPTV Manager must be enabled. This avoids
 starting a scan with an unsaved enable toggle or missing discovery settings.
-It does not change your IPTV Simple instance settings.
+Since 0.2.2 it also ensures the native IPTV Simple instance points to Manager.
 
 After refreshing, open **Odido settings → Kodi TV / IPTV Manager → Check Kodi TV
 integration**. The status dialog shows the integration and dependency enabled
 states, channel/guide export phase and count, and whether IPTV Manager's
-playlist.m3u8 and epg.xml files exist. Export phases are persistent across Kodi
+playlist.m3u8 and epg.xml files exist. It also shows the saved PVR instance filename.
+The status now opens in a scrollable text viewer so all lines remain visible.
+Export phases are persistent across Kodi
 restarts and contain no credentials or playback URLs:
 
 * NOT_CALLED: no callback has reached this addon since installing this update.
@@ -146,13 +162,12 @@ restarts and contain no credentials or playback URLs:
 * SENT with zero entries: check channel selection and provider guide availability.
 * DISABLED / ERROR: enable integration or report the safe error code shown.
 
-If both Manager files exist but Kodi TV is empty, check the active IPTV Simple
-instance (often **Migrated Add-on Config**) rather than its legacy global
-settings. Kodi 21 IPTV Simple reads instance-specific paths. Set playlist and EPG
-locations to **Local path**, using the two Manager paths in the setup section,
-and ensure that instance is enabled. Do not enter local paths in the remote URL
-fields. Reopen Kodi TV after restarting Kodi. These checks are diagnostic;
-the precise cause on the reporting device has not yet been confirmed.
+If both exports show SENT and Manager files exist but Kodi TV is empty, run
+**Configure IPTV Simple automatically**, let the refresh finish and restart Kodi.
+The settings screen should show an enabled **Odido TV (IPTV Manager)** instance
+with local Manager paths. A SENT callback confirms delivery to Manager, not that
+Kodi has reloaded the instance yet. The native file-writing behavior has regression
+coverage; actual instance activation still needs confirmation on the user's device.
 
 **Export diagnostics** also displays the last IPTV error directly in the dialog.
 The generated JSON retains that error without account/provider response dumps.

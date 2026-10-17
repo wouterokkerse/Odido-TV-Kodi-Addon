@@ -16,6 +16,7 @@ from .api import Client, OdidoError, AuthError
 from .storage import SavedLists, read_json, write_json
 from .tvtime import local_time
 from .iptv import Exporter, selection, send as send_iptv
+from .pvr import configure as configure_pvr
 from .relay import PROPERTY as RELAY_PROPERTY, RelayError, register_playback
 
 STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
@@ -29,7 +30,8 @@ STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
            'internal_error': 30052, 'iptv_channels': 30062,
            'iptv_check': 30071, 'iptv_enabled': 30061, 'iptv_playlist': 30072,
            'iptv_guide': 30073, 'iptv_channels_callback': 30074, 'iptv_epg_callback': 30075,
-           'yes': 30076, 'no': 30077, 'iptv_error': 30078, 'iptv_manager_missing': 30079}
+           'yes': 30076, 'no': 30077, 'iptv_error': 30078, 'iptv_manager_missing': 30079,
+           'pvr_missing': 30080, 'pvr_configured': 30081, 'pvr_instance': 30082}
 PLAYING_PROPERTY = 'plugin.video.odidotv.manifest'
 
 
@@ -246,12 +248,34 @@ class Plugin:
             # Never open login/error dialogs or resolve/end a directory here.
             report(error)
 
-    def iptv_refresh(self):
+    def iptv_refresh(self, setup=False):
         if not self.require_login():
             return
         if not xbmc.getCondVisibility('System.AddonIsEnabled(service.iptv.manager)'):
             self.dialog.ok('Odido TV', self.tr('iptv_manager_missing'))
             return
+        if not xbmc.getCondVisibility('System.HasAddon(pvr.iptvsimple)'):
+            self.dialog.ok('Odido TV', self.tr('pvr_missing'))
+            return
+        pvr = xbmcaddon.Addon('pvr.iptvsimple')
+        manager = xbmcaddon.Addon('service.iptv.manager')
+        manager_profile = xbmcvfs.translatePath(manager.getAddonInfo('profile'))
+        try:
+            instance, changed = configure_pvr(xbmcvfs.translatePath(pvr.getAddonInfo('profile')),
+                                              os.path.join(manager_profile, 'playlist.m3u8'),
+                                              os.path.join(manager_profile, 'epg.xml'), xbmcvfs.translatePath)
+        except ValueError:
+            raise OdidoError('IPTV_PVR_MIGRATE_FIRST') from None
+        write_json(os.path.join(self.profile, 'iptv_pvr.json'), {'instance': instance})
+        # Ensure a PVR instance written while the addon was disabled is loaded.
+        if not xbmc.getCondVisibility('System.AddonIsEnabled(pvr.iptvsimple)'):
+            result = json.loads(xbmc.executeJSONRPC(json.dumps({
+                'jsonrpc': '2.0', 'id': 1, 'method': 'Addons.SetAddonEnabled',
+                'params': {'addonid': 'pvr.iptvsimple', 'enabled': True}})))
+            if 'error' in result:
+                raise OdidoError('IPTV_PVR_ENABLE_FAILED')
+        if setup:
+            self.dialog.ok('Odido TV', self.tr('pvr_configured'))
         # Persist discovery before Manager scans, including when the settings
         # dialog's enable toggle has not yet been saved.
         self.addon.setSetting('iptv.channels_uri', 'plugin://plugin.video.odidotv/?action=iptv_channels')
@@ -277,7 +301,10 @@ class Plugin:
                  self.tr('iptv_epg_callback') + ': ' + callback('epg'),
                  self.tr('iptv_playlist') + ': ' + yesno(xbmcvfs.exists('special://profile/addon_data/service.iptv.manager/playlist.m3u8')),
                  self.tr('iptv_guide') + ': ' + yesno(xbmcvfs.exists('special://profile/addon_data/service.iptv.manager/epg.xml'))]
-        self.dialog.ok(self.tr('iptv_check'), '\n'.join(lines))
+        native = read_json(os.path.join(self.profile, 'iptv_pvr.json'), {})
+        filename = native.get('instance', '') if isinstance(native, dict) else ''
+        lines.append(self.tr('pvr_instance') + ': ' + (filename or 'NOT_CONFIGURED'))
+        self.dialog.textviewer(self.tr('iptv_check'), '\n'.join(lines))
 
     def search(self):
         # Explicit channel-title search; no speculative VOD search endpoint.
@@ -346,6 +373,9 @@ class Plugin:
             return
         if action == 'iptv_refresh':
             self.iptv_refresh()
+            return
+        if action == 'iptv_setup':
+            self.iptv_refresh(setup=True)
             return
         if action in ('live', 'replay', 'guide', 'search', 'play') and not self.require_login():
             if action == 'play':

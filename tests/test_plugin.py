@@ -26,9 +26,14 @@ class PluginTests(unittest.TestCase):
         addon.getSetting.return_value = 'Kodi Living Room'
         addon.getAddonInfo.side_effect = lambda key: self.directory.name if key == 'profile' else '0.1.0'
         addon.getLocalizedString.side_effect = str
+        pvr_addon, manager_addon = Mock(), Mock()
+        pvr_addon.getAddonInfo.return_value = str(Path(self.directory.name)/'pvr')
+        manager_addon.getAddonInfo.return_value = str(Path(self.directory.name)/'manager')
+        self.pvr_addon, self.manager_addon = pvr_addon, manager_addon
         self.helper = Mock()
         modules = {'xbmc': self.kodi, 'xbmcgui': self.gui, 'xbmcplugin': self.kplugin,
-                   'xbmcaddon': types.SimpleNamespace(Addon=lambda: addon),
+                   'xbmcaddon': types.SimpleNamespace(Addon=lambda addon_id=None: {
+                       'pvr.iptvsimple': pvr_addon, 'service.iptv.manager': manager_addon}.get(addon_id, addon)),
                    'xbmcvfs': types.SimpleNamespace(translatePath=lambda p: p), 'inputstreamhelper': self.helper}
         self.patcher = patch.dict(sys.modules, modules)
         self.patcher.start()
@@ -145,6 +150,37 @@ class PluginTests(unittest.TestCase):
         self.kodi.executebuiltin.assert_not_called()
         plugin.dialog.ok.assert_called_once_with('Odido TV', '30079')
 
+    def test_refresh_configures_native_instance_without_legacy_manager_setup(self):
+        import xml.etree.ElementTree as ET
+        plugin = self.plugin('?action=iptv_refresh')
+        self.kodi.getCondVisibility.return_value = True
+        plugin.dispatch()
+        path = Path(self.directory.name)/'pvr/instance-settings-2.xml'
+        settings = {item.get('id'): item.text or '' for item in ET.parse(path).getroot()}
+        self.assertEqual(settings['m3uPathType'], '0')
+        self.assertEqual(settings['m3uPath'], str(Path(self.directory.name)/'manager/playlist.m3u8'))
+        self.assertEqual(settings['epgPath'], str(Path(self.directory.name)/'manager/epg.xml'))
+        self.assertEqual(settings['kodi_addon_instance_enabled'], 'true')
+        self.kodi.executebuiltin.assert_called_once_with('RunScript(service.iptv.manager,refresh)')
+
+    def test_explicit_setup_shows_configured_message_and_starts_refresh(self):
+        plugin = self.plugin('?action=iptv_setup')
+        self.kodi.getCondVisibility.return_value = True
+        plugin.dispatch()
+        plugin.dialog.ok.assert_called_once_with('Odido TV', '30081')
+        self.kodi.executebuiltin.assert_called_once_with('RunScript(service.iptv.manager,refresh)')
+
+    def test_setup_enables_disabled_pvr_after_saving_instance(self):
+        import json
+        plugin = self.plugin('?action=iptv_setup')
+        self.kodi.getCondVisibility.side_effect = lambda condition: condition != 'System.AddonIsEnabled(pvr.iptvsimple)'
+        self.kodi.executeJSONRPC.return_value = '{"result":"OK"}'
+        plugin.dispatch()
+        request = json.loads(self.kodi.executeJSONRPC.call_args.args[0])
+        self.assertEqual(request['method'], 'Addons.SetAddonEnabled')
+        self.assertEqual(request['params'], {'addonid': 'pvr.iptvsimple', 'enabled': True})
+        self.assertTrue((Path(self.directory.name)/'pvr/instance-settings-2.xml').is_file())
+
     def test_successful_callback_persists_count_after_send(self):
         from resources.lib import plugin as module
         from resources.lib.iptv import send
@@ -181,7 +217,7 @@ class PluginTests(unittest.TestCase):
         self.kodi.getCondVisibility.return_value = True
         with patch.object(module.xbmcvfs, 'exists', side_effect=[True, False], create=True):
             plugin.dispatch()
-        message = plugin.dialog.ok.call_args.args[1]
+        message = plugin.dialog.textviewer.call_args.args[1]
         self.assertEqual(message.count('NOT_CALLED'), 2)
         self.assertIn('30072: 30076', message)  # Playlist exists.
         self.assertIn('30073: 30077', message)  # Guide absent.

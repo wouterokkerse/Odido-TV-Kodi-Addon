@@ -170,3 +170,34 @@ The new refresh preflight persists iptv.enabled and callback URIs before startin
 Manager; the diagnostic screen separates callback receipt, generation/send,
 Manager file creation and dependency enabled states. No PVR settings are rewritten.
 127 tests pass. Full Kodi PVR instance/socket validation still requires the device.
+
+## 0.2.2 native IPTV Simple configuration
+
+The subscriber confirms both Manager callbacks now show SENT, while IPTV Simple
+still does not use the generated files by default. The setup now configures a
+native instance directly rather than asking Manager's older setup script to
+write legacy global settings and copy them over instance XML files.
+
+Verified against Kodi Omega:
+* xbmc/addons/addoninfo/AddonInfo.cpp::GetKnownInstanceIds scans
+  instance-settings-N.xml under the PVR addon profile and uses positive IDs.
+* xbmc/addons/Addon.cpp defines the corresponding per-instance settings path.
+* xbmc/addons/IAddon.h names kodi_addon_instance_name and
+  kodi_addon_instance_enabled; zero is reserved for global settings.
+* kodi-pvr/pvr.iptvsimple Omega resources/instance-settings.xml and
+  src/iptvsimple/InstanceSettings.cpp define local path type 0, m3uPath/epgPath,
+  catchup fields and UTC timeshift. SettingsMigration.cpp confirms old global
+  values are migration-only once an instance has a name.
+
+The original standalone pvr.py module creates/reuses only a dedicated or existing
+Manager instance, preserves other providers, writes atomic XML and backs up a
+repaired instance once. It reserves the implicit ID 1 and prevents hiding an
+unrelated legacy provider without instance files. Manager's existing restart
+logic or a user Kodi restart loads the configuration; no direct stop/restart is
+issued while configuring the instance. No Kodi/PVR implementation is bundled.
+
+139 synthetic tests pass. New tests use real temporary XML files and assert
+byte-for-byte preservation of unrelated native/global settings, no duplicates,
+existing Manager repair, backup retention, default-flag removal, ID handling and
+that the plugin saves native paths before refreshing. The native Kodi addon has
+not been run here; actual activation remains a device validation step.

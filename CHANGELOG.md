@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.2
+
+* User confirmed both exports are SENT; IPTV Simple still lacks its native paths.
+* Configure an enabled Kodi 21 IPTV Simple instance with local Manager playlist
+  and guide paths from both the setup and enable/refresh actions.
+* Reuse existing Manager instances or create Odido TV (IPTV Manager), preserve
+  other providers/global settings, back up repaired Manager files and avoid
+  duplicates on repeated setup. Do not overwrite active remote sources merely
+  because unused local fields happen to contain Manager paths.
+* Stop invoking Manager's legacy setup/copy-all-instance-files routine. Enable
+  IPTV Simple if disabled; Manager retains control of refresh/reload scheduling.
+* Show the saved instance filename in a scrollable integration status viewer.
+* 139 tests pass, including real XML files, preservation, defaults, backups,
+  repeated setup, native paths and enabling a disabled PVR addon.
+* Native Kodi instance activation still requires testing on the user's device.
+
 ## 0.2.1
 
 * Add Check Kodi TV integration: enabled states, persistent channel/guide callback
