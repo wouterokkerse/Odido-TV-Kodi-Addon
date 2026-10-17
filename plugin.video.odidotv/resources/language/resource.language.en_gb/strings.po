@@ -2,6 +2,42 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30091"
+msgid "This programme has not started yet."
+msgstr ""
+
+msgctxt "#30092"
+msgid "This programme has ended and this channel does not offer replay."
+msgstr ""
+
+msgctxt "#30083"
+msgid "Start live channels at"
+msgstr ""
+
+msgctxt "#30084"
+msgid "Play from beginning of live buffer"
+msgstr ""
+
+msgctxt "#30085"
+msgid "Live"
+msgstr ""
+
+msgctxt "#30086"
+msgid "Beginning of live buffer"
+msgstr ""
+
+msgctxt "#30087"
+msgid "Watch live"
+msgstr ""
+
+msgctxt "#30089"
+msgid "Playback"
+msgstr ""
+
+msgctxt "#30090"
+msgid "Rewind is limited to the history available in the live stream."
+msgstr ""
+
 msgctxt "#30082"
 msgid "IPTV Simple instance settings saved"
 msgstr ""

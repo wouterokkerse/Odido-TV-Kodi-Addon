@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
+  <category label="30089">
+    <setting id="live_start" type="enum" label="30083" lvalues="30085|30086" default="0"/>
+    <setting type="lsep" label="30090"/>
+  </category>
   <category label="30060">
     <setting id="iptv.enabled" type="bool" label="30061" default="false"/>
     <setting id="iptv.channels_uri" default="plugin://plugin.video.odidotv/?action=iptv_channels" visible="false"/>

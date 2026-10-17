@@ -201,3 +201,27 @@ byte-for-byte preservation of unrelated native/global settings, no duplicates,
 existing Manager repair, backup retention, default-flag removal, ID handling and
 that the plugin saves native paths before refreshing. The native Kodi addon has
 not been run here; actual activation remains a device validation step.
+
+## 0.2.3 live-buffer start position
+
+The subscriber confirms native TV integration works, and clarified that an
+in-progress programme should use the live stream, starting at the live edge or
+its available buffer beginning, rather than require an unavailable replay.
+
+Verified xbmc/inputstream.adaptive Omega src/CompKodiProps.cpp and .h:
+inputstream.adaptive.play_timeshift_buffer is parsed as a boolean. The header
+describes starting a LIVE stream from the beginning of its buffer instead of the
+end. The upstream changelog dates support to 2.5.2. This addon already requires
+an ISA version supporting it. No external implementation code was copied.
+
+The new playmode.py resolves timed programme URLs at tune time, preserving
+programme identity across live-to-completed transitions. Live-buffer selection
+uses the existing Client.stream('channel', ...) request, and explicitly sets the
+ISA property on the resolved item. No provider play URL, licence or live MPD
+contents are altered. Future entries carry timing metadata so they become live
+without an EPG reload, while the local router blocks them before broadcast.
+
+151 synthetic tests pass, including live/edge property selection, identical
+channel-request contracts for both modes, current-to-past link transitions,
+non-replay channel limits, future entry activation and retained DASH buffer depth
+and timeline. Real Odido buffer length/seek behavior remains a device check.

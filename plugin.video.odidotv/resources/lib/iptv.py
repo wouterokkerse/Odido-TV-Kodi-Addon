@@ -25,9 +25,9 @@ def selection(value):
     return set(result)
 
 
-def playback_url(kind, identifier, channel='', title=''):
+def playback_url(kind, identifier, channel='', title='', **params):
     return BASE + '?' + urlencode({'action': 'play', 'kind': kind, 'id': str(identifier),
-                                  'channel': str(channel), 'title': title})
+                                  'channel': str(channel), 'title': title, **params})
 
 
 def channel_key(identifier):
@@ -46,8 +46,14 @@ def programme(row, replay, now):
                   'title': row['title'], 'description': row.get('plot', ''), 'image': row.get('image', '')}
     except (ValueError, OverflowError, OSError):
         return None
-    if replay and start <= now * 1000:
-        result['stream'] = playback_url('program', row['id'], row['channel'], row['title'])
+    if replay or now * 1000 < end:
+        # Keep the programme identity/times: a link exported while live must
+        # become replay after it finishes, rather than tune a different show.
+        # Future entries also need timed links so they work when they become
+        # live without requiring a fresh guide import at every show boundary.
+        result['stream'] = playback_url('program', row['id'], row['channel'], row['title'],
+                                       programme_start=int(start), programme_end=int(end),
+                                       replay='1' if replay else '0')
     return result
 
 

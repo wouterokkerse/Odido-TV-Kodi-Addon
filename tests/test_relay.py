@@ -57,6 +57,16 @@ def remote_url(context, local):
 
 
 class ManifestTests(unittest.TestCase):
+    def test_live_timeline_and_buffer_depth_survive_relay(self):
+        xml = '<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="dynamic" timeShiftBufferDepth="PT7200S" availabilityStartTime="2026-06-06T00:00:00Z"><Period start="PT0S"><AdaptationSet><SegmentTemplate media="segment-$Time$.m4s" timescale="1000"><SegmentTimeline><S t="100000" d="4000" r="9"/></SegmentTimeline></SegmentTemplate></AdaptationSet></Period></MPD>'
+        context = playback()
+        context.set_final_url(FINAL)
+        document = parseString(context.rewrite_manifest(xml, FINAL, ROOT))
+        self.assertEqual(document.documentElement.getAttribute('type'), 'dynamic')
+        self.assertEqual(document.documentElement.getAttribute('timeShiftBufferDepth'), 'PT7200S')
+        self.assertEqual(document.getElementsByTagName('S')[0].getAttribute('t'), '100000')
+        self.assertEqual(document.getElementsByTagName('S')[0].getAttribute('r'), '9')
+
     def test_final_redirect_prefix_used_for_root_relative_segments(self):
         xml = '<MPD xmlns="urn:mpeg:dash:schema:mpd:2011"><Period><AdaptationSet><SegmentTemplate media="/PLTV/86/v-$Time$.dash?sig=a%2Bb" initialization="/PLTV/86/init.dash"/></AdaptationSet></Period></MPD>'
         transport = Mock()

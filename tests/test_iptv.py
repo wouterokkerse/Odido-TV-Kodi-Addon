@@ -87,11 +87,32 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(row['description'], 'A & B < C')
         self.assertEqual(len(payload['epg']['odido.18']), 1)  # Cross-day duplicates removed.
 
-    def test_future_and_non_replay_channels_have_schedule_without_catchup_link(self):
-        self.client.epg.return_value = [programme(start=int((NOW + 3600) * 1000)), programme('19')]
+    def test_future_links_become_live_without_refresh_but_finished_non_replay_has_no_link(self):
+        from resources.lib.playmode import target
+        self.client.epg.return_value = [programme(start=int((NOW + 3600) * 1000)),
+                                       programme('19', start=int((NOW - 7200) * 1000))]
         payload = self.exporter().epg(1)
-        self.assertNotIn('stream', payload['epg']['odido.18'][0])
+        params = {key: value[0] for key, value in parse_qs(urlparse(payload['epg']['odido.18'][0]['stream']).query).items()}
+        with self.assertRaisesRegex(OdidoError, 'PROGRAMME_NOT_STARTED'):
+            target(params, 'live', NOW * 1000)
+        self.assertEqual(target(params, 'live', (NOW + 4000) * 1000), ('channel', '18', '', 'begin'))
         self.assertNotIn('stream', payload['epg']['odido.19'][0])
+
+    def test_current_programme_link_uses_live_buffer_then_replay_when_finished(self):
+        from resources.lib.playmode import target
+        payload = self.exporter().epg(1)
+        params = {key: value[0] for key, value in parse_qs(urlparse(payload['epg']['odido.18'][0]['stream']).query).items()}
+        self.assertEqual(target(params, 'live', NOW * 1000), ('channel', '18', '', 'begin'))
+        self.assertEqual(target(params, 'live', (NOW + 3600) * 1000), ('program', '70018', '18', None))
+
+    def test_current_non_replay_channel_can_open_live_buffer_but_not_finished_replay(self):
+        from resources.lib.playmode import target
+        self.client.epg.return_value = [programme('19')]
+        payload = self.exporter().epg(1)
+        params = {key: value[0] for key, value in parse_qs(urlparse(payload['epg']['odido.19'][0]['stream']).query).items()}
+        self.assertEqual(target(params, 'live', NOW * 1000), ('channel', '19', '', 'begin'))
+        with self.assertRaisesRegex(OdidoError, 'REPLAY_UNAVAILABLE'):
+            target(params, 'live', (NOW + 3600) * 1000)
 
     def test_bad_timestamps_do_not_break_entire_epg(self):
         self.client.epg.return_value = [programme(), dict(programme(), start=None), dict(programme(), end=0)]

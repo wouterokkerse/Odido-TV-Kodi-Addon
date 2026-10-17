@@ -3,6 +3,15 @@ import json
 from pathlib import Path
 
 STRINGS = {
+30091: ('This programme has not started yet.', 'Dit programma is nog niet begonnen.'),
+30092: ('This programme has ended and this channel does not offer replay.', 'Dit programma is afgelopen en deze zender biedt geen terugkijken.'),
+30083: ('Start live channels at', 'Livezenders starten op'),
+30084: ('Play from beginning of live buffer', 'Afspelen vanaf begin livebuffer'),
+30085: ('Live', 'Live'),
+30086: ('Beginning of live buffer', 'Begin van livebuffer'),
+30087: ('Watch live', 'Live kijken'),
+30089: ('Playback', 'Afspelen'),
+30090: ('Rewind is limited to the history available in the live stream.', 'Terugspoelen is beperkt tot de beschikbare geschiedenis in de livestream.'),
 30082: ('IPTV Simple instance settings saved', 'Instantie-instellingen IPTV Simple opgeslagen'),
 30080: ('Install IPTV Simple Client from Kodi PVR clients first, then retry setup.', 'Installeer eerst IPTV Simple Client via de PVR-clients van Kodi en probeer opnieuw.'),
 30081: ('An IPTV Simple instance is configured for IPTV Manager. Channels and guide will now refresh. Restart Kodi after the refresh if the TV list stays empty.', 'Een IPTV Simple-instantie is ingesteld voor IPTV Manager. Zenders en gids worden nu vernieuwd. Herstart Kodi na het vernieuwen als de tv-lijst leeg blijft.'),

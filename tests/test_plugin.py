@@ -289,6 +289,34 @@ class PluginTests(unittest.TestCase):
         self.helper.Helper.assert_not_called()
         self.assertTrue(self.kplugin.setResolvedUrl.call_args.args[1])
 
+    def test_live_modes_use_same_stream_and_set_inputstream_start_position(self):
+        for mode, value in (('begin', 'true'), ('live', 'false')):
+            plugin = self.plugin('?action=play&kind=channel&id=18&start=' + mode)
+            plugin.client.stream.return_value = {'url': 'https://example.test/live.mpd', 'license': '', 'custom_data': ''}
+            plugin.dispatch()
+            plugin.client.stream.assert_called_once_with('channel', '18', '')
+            self.kplugin.setResolvedUrl.call_args.args[2].setProperty.assert_any_call(
+                'inputstream.adaptive.play_timeshift_buffer', value)
+
+    def test_current_programme_opens_channel_buffer_without_replay_request(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=play&kind=program&id=77&channel=18&programme_start=1000&programme_end=3000')
+        plugin.client.stream.return_value = {'url': 'https://example.test/live.mpd', 'license': '', 'custom_data': ''}
+        with patch.object(module.time, 'time', return_value=2):
+            plugin.dispatch()
+        plugin.client.stream.assert_called_once_with('channel', '18', '')
+        self.kplugin.setResolvedUrl.call_args.args[2].setProperty.assert_any_call(
+            'inputstream.adaptive.play_timeshift_buffer', 'true')
+
+    def test_channel_context_menu_has_both_live_positions(self):
+        plugin = self.plugin('?action=live')
+        plugin.client.channels.return_value = [channel()]
+        plugin.client.live_programmes.return_value = ([], [])
+        plugin.dispatch()
+        contexts = self.items[0].addContextMenuItems.call_args.args[0]
+        self.assertTrue(any('start=live' in command and command.startswith('PlayMedia(') for _, command in contexts))
+        self.assertTrue(any('start=begin' in command and command.startswith('PlayMedia(') for _, command in contexts))
+
     def test_widevine_unavailable_reports_failure(self):
         plugin = self.plugin('?action=play&kind=channel&id=18')
         plugin.client.stream.return_value = {'url': 'https://cdn.example/a.mpd', 'license': 'https://tv.odido.nl/license', 'custom_data': ''}

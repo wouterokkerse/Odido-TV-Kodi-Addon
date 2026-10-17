@@ -2,6 +2,42 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30091"
+msgid "This programme has not started yet."
+msgstr "Dit programma is nog niet begonnen."
+
+msgctxt "#30092"
+msgid "This programme has ended and this channel does not offer replay."
+msgstr "Dit programma is afgelopen en deze zender biedt geen terugkijken."
+
+msgctxt "#30083"
+msgid "Start live channels at"
+msgstr "Livezenders starten op"
+
+msgctxt "#30084"
+msgid "Play from beginning of live buffer"
+msgstr "Afspelen vanaf begin livebuffer"
+
+msgctxt "#30085"
+msgid "Live"
+msgstr "Live"
+
+msgctxt "#30086"
+msgid "Beginning of live buffer"
+msgstr "Begin van livebuffer"
+
+msgctxt "#30087"
+msgid "Watch live"
+msgstr "Live kijken"
+
+msgctxt "#30089"
+msgid "Playback"
+msgstr "Afspelen"
+
+msgctxt "#30090"
+msgid "Rewind is limited to the history available in the live stream."
+msgstr "Terugspoelen is beperkt tot de beschikbare geschiedenis in de livestream."
+
 msgctxt "#30082"
 msgid "IPTV Simple instance settings saved"
 msgstr "Instantie-instellingen IPTV Simple opgeslagen"

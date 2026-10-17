@@ -1,4 +1,4 @@
-# Odido TV for Kodi — 0.2.2 Kodi TV integration
+# Odido TV for Kodi — 0.2.3 live-buffer playback
 
 A standalone, unofficial Odido TV addon targeting **Kodi 21.2**.
 
@@ -13,20 +13,21 @@ reached. Updating the addon retains the existing device ID, session and lists.
 
 Playback handling follows the public protocol and redirect behavior documented
 in [wouterokkerse/dut-iptv](https://github.com/wouterokkerse/dut-iptv).
-All **139 automated tests** pass using synthetic API/CDN responses and Kodi
+All **151 automated tests** pass using synthetic API/CDN responses and Kodi
 doubles. The development environment could not run full Kodi/Widevine playback;
 the subscriber's device testing supplies the live-service confirmation.
 
 Download the installable addon:
-[plugin.video.odidotv-0.2.2.zip](downloads/plugin.video.odidotv-0.2.2.zip).
+[plugin.video.odidotv-0.2.3.zip](downloads/plugin.video.odidotv-0.2.3.zip).
 The unpacked Python source is in [plugin.video.odidotv](plugin.video.odidotv),
 with tests and reproducible packaging scripts alongside it. Version 0.2.0 adds
-optional IPTV Manager integration; native Kodi TV operation needs device testing. A subscriber has confirmed
-that IPTV Manager receives the channel and guide exports.
+optional IPTV Manager integration; a subscriber confirmed the native Kodi TV integration works after 0.2.2.
+Version 0.2.3 adds live-buffer start choices; their actual rewind range needs
+device testing.
 
 ## Install / update
 
-1. Install `plugin.video.odidotv-0.2.2.zip` through **Add-ons → Install from zip
+1. Install `plugin.video.odidotv-0.2.3.zip` through **Add-ons → Install from zip
    file**, over the existing addon. Keep its addon data.
 2. **Fully quit Kodi and start it again.** The updated playback service must be
    restarted; reopening only the addon leaves the old service running.
@@ -50,6 +51,45 @@ it does not unregister the device on Odido's servers.
 request sends it as `authenticateDevice.deviceName`. Changing the name does not
 change the physical device ID. Current Odido acceptance of the label field is
 still unverified.
+
+## Watch live or open the beginning of the live buffer
+
+Version 0.2.3 can open the **same live stream** near the live edge or at its
+earliest buffered segment. In the addon's **Live TV** list, long-press a channel
+(or open its context menu) and choose **Watch live** or **Play from beginning of
+live buffer**. Normal channel selection uses **Watch live** by default.
+
+For a different default, open **Settings → Playback → Start live channels at**
+and choose **Live** or **Beginning of live buffer**. This default also applies
+when opening a channel from Kodi's native TV channel list. The explicit addon
+context-menu choices override it for that play.
+
+For native **TV → Guide → Play programme**, a timed programme link checks its
+schedule when you open it. If it is still airing, it opens the channel's live
+stream at the beginning of the available buffer instead of calling the replay
+route. After it finishes, that same link requests the completed programme's
+replay when the channel supports replay. Timed links for future programmes are
+exported too so they become usable when broadcast starts without another EPG
+import; opening one before its start is rejected locally without a stream request.
+A completed programme on a non-replay channel remains unavailable for replay.
+
+**Refresh channels and guide once after this update** to replace older native
+guide playback links. The addon's own replay guide also carries programme times
+so selecting an in-progress programme uses the live buffer.
+
+The beginning means **the earliest segment Odido currently exposes in the live
+DASH buffer**, not necessarily the start of the current programme. It can include
+an earlier programme, or cover only the most recent minutes. Expired segments
+cannot be recovered, and a stream with no history cannot be rewound by this
+setting. This is not a local DVR or a way to extend Odido's retention window.
+Once playing, Kodi/InputStream Adaptive provides the supported seek controls.
+
+The resolved item explicitly sets InputStream Adaptive's
+`inputstream.adaptive.play_timeshift_buffer` to true for buffer-start or false
+for live-edge playback. The request, manifest, DRM licence and relay remain the
+same; no alternative replay URL or guessed start-time URL parameter is used.
+The relay preserves the provider's timeline and timeShiftBufferDepth. Its live
+seek behavior still needs testing with actual provider streams on your device.
 
 ## Kodi TV, IPTV Simple and IPTV Manager
 
@@ -102,15 +142,15 @@ refresh when convenient if automatic reload is disabled or deferred by Manager.
 
 The EPG contains **seven calendar days including today, plus tomorrow** by
 default. Choose 1, 3 or 7 replay-guide days in Odido settings. For programmes
-already broadcast, replay-capable channels include an XMLTV catchup link back to
-the existing replay playback route. Future programmes appear in the guide without
-a playback link. Odido still decides replay availability, subscription rights,
+that support live-buffer or replay playback, XMLTV catchup links
+route back to the addon and resolve the appropriate mode at playback time.
+Future links are blocked until broadcast begins. Odido still decides replay availability, subscription rights,
 parental access and concurrent stream limits when playback starts.
 
 Channel selection applies to Kodi TV exports only. The catalogue is not an
 entitlement list: selecting a channel does not subscribe to it. Unsupported or
 retired catalogue entries may have no EPG or fail at playback. Native recording,
-server-side timers and timeshift controls are not added by this integration.
+server-side timers and local DVR buffering are not added by this integration.
 
 Guide refreshes use groups of at most 20 channels and individual fallback for a
 provider-rejected group. Today's guide is cached for 15 minutes, tomorrow for an
@@ -132,7 +172,7 @@ If importing fails, use **Export diagnostics** in Odido TV and inspect
 `IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
 retain their safe stage code. No raw responses or exception messages are logged.
 
-All 139 unit tests pass. A separate compatibility check ran these payloads through
+All 151 unit tests pass. A separate compatibility check ran these payloads through
 IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
 catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
 could not be run in this workspace; they require testing on your Kodi device.

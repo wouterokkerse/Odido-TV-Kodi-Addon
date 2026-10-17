@@ -17,6 +17,7 @@ from .storage import SavedLists, read_json, write_json
 from .tvtime import local_time
 from .iptv import Exporter, selection, send as send_iptv
 from .pvr import configure as configure_pvr
+from .playmode import target as playback_target
 from .relay import PROPERTY as RELAY_PROPERTY, RelayError, register_playback
 
 STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
@@ -31,7 +32,9 @@ STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
            'iptv_check': 30071, 'iptv_enabled': 30061, 'iptv_playlist': 30072,
            'iptv_guide': 30073, 'iptv_channels_callback': 30074, 'iptv_epg_callback': 30075,
            'yes': 30076, 'no': 30077, 'iptv_error': 30078, 'iptv_manager_missing': 30079,
-           'pvr_missing': 30080, 'pvr_configured': 30081, 'pvr_instance': 30082}
+           'pvr_missing': 30080, 'pvr_configured': 30081, 'pvr_instance': 30082,
+           'buffer_start': 30084, 'watch_live': 30087, 'not_started': 30091,
+           'no_replay': 30092}
 PLAYING_PROPERTY = 'plugin.video.odidotv.manifest'
 
 
@@ -89,6 +92,10 @@ class Plugin:
             if record['kind'] == 'program':
                 contexts.append((self.tr('add_later'), 'RunPlugin(%s)' % self.url(
                     'save', list='later', record=encoded)))
+            elif record['kind'] == 'channel':
+                for mode, label in (('live', 'watch_live'), ('begin', 'buffer_start')):
+                    contexts.append((self.tr(label), 'PlayMedia(%s)' % self.url(
+                        'play', kind='channel', id=record['id'], title=record['title'], start=mode)))
             if self.params.get('action') == 'saved':
                 contexts.append((self.tr('remove'), 'RunPlugin(%s)' % self.url(
                     'remove', list=self.params['list'], record=encoded)))
@@ -98,9 +105,12 @@ class Plugin:
         xbmcplugin.addDirectoryItem(self.handle, self.url(action, **params), item, isFolder=folder)
 
     def content_entry(self, record, label=None):
+        bounds = {}
+        if record['kind'] == 'program' and record.get('start', 0) > 0 and record.get('end', 0) > record['start']:
+            bounds = {'programme_start': record['start'], 'programme_end': record['end']}
         self.entry(label or record['title'], 'play', folder=False, record=record,
                    kind=record['kind'], id=record['id'], channel=record.get('channel', ''),
-                   title=record['title'])
+                   title=record['title'], **bounds)
 
     def root(self):
         for key in ('live', 'replay', 'search'):
@@ -325,7 +335,9 @@ class Plugin:
         self.finish()
 
     def play(self):
-        stream = self.client.stream(self.params['kind'], self.params['id'], self.params.get('channel', ''))
+        default = 'begin' if self.addon.getSetting('live_start') == '1' else 'live'
+        kind, identifier, channel, mode = playback_target(self.params, default, time.time() * 1000)
+        stream = self.client.stream(kind, identifier, channel)
         if stream['license']:
             import inputstreamhelper
             if not inputstreamhelper.Helper('mpd', drm='com.widevine.alpha').check_inputstream():
@@ -349,6 +361,8 @@ class Plugin:
         item.getVideoInfoTag().setTitle(self.params.get('title', 'Odido TV'))
         item.setProperty('inputstream', 'inputstream.adaptive')
         item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
+        if kind == 'channel':
+            item.setProperty('inputstream.adaptive.play_timeshift_buffer', 'true' if mode == 'begin' else 'false')
         if stream['license']:
             item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
             item.setProperty('inputstream.adaptive.license_key',
@@ -435,6 +449,8 @@ def run():
             if plugin.params.get('action') == 'guide':
                 xbmcgui.Window(10000).setProperty('plugin.video.odidotv.last_guide_error', code)
             message = plugin.tr('relay_unavailable' if code.startswith('RELAY_') else
+                                'not_started' if code == 'PROGRAMME_NOT_STARTED' else
+                                'no_replay' if code == 'REPLAY_UNAVAILABLE' else
                                 'device_limit' if code == 'DEVICE_LIMIT' else
                                 'expired' if isinstance(error, AuthError) else
                                 'internal_error' if not isinstance(error, (OdidoError, RelayError)) else 'failed')

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.3
+
+* Add Watch live and Play from beginning of live buffer channel context actions.
+* Add a default live-start setting, applying to addon and native Kodi TV tuning.
+* Set InputStream Adaptive play_timeshift_buffer explicitly while keeping the
+  same provider live request, Widevine licence and media relay.
+* In-progress programme links now open that live stream's buffer rather than
+  requesting a replay. Timed native guide links switch to replay after completion.
+* Export timed future links so they become usable without another guide import;
+  reject playback before broadcast and completed replay on non-replay channels.
+* Preserve DASH timeline/buffer depth and explain that buffer start is limited
+  to provider history, not guaranteed to be the programme's beginning.
+* 151 tests pass; actual live seeking still needs device validation.
+
 ## 0.2.2
 
 * User confirmed both exports are SENT; IPTV Simple still lacks its native paths.
