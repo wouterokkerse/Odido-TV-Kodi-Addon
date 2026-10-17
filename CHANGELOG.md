@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0
+
+* Add optional IPTV Manager v1 channel/EPG exports for native Kodi TV through
+  IPTV Simple. Integration is off by default and uses the existing Odido session.
+* Export stable channel IDs, numbers, catalogue logos and plugin playback URLs.
+* Add channel selection and setup/refresh controls in a Kodi TV settings category.
+* Add seven-day EPG history (including today) and tomorrow; settings allow 1/3/7
+  days. Replay-capable, already-broadcast programmes get native guide catchup links.
+* Cache schedules per channel/day; use bounded batches and individual API fallback,
+  preserve cached schedules on errors, prune old guide files and honor cancellation.
+* Open callbacks before API work, use sendall and ASCII-escaped JSON for Manager's
+  chunk decoder; never export session, signed MPD or licence credentials.
+* Add safe IPTV error diagnostics and keep background exports non-interactive.
+* Retain working live/replay/DRM relay contracts. No recording/timer support added.
+* 122 tests pass plus a contract check against IPTV Manager's actual M3U/XMLTV
+  writers. Native Kodi PVR integration still needs subscriber device testing.
+
 ## 0.1.8
 
 * User confirmed replay now works; current-programme lookup in the Live TV menu

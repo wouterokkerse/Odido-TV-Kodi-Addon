@@ -3,6 +3,16 @@ import json
 from pathlib import Path
 
 STRINGS = {
+30060: ('Kodi TV / IPTV Manager', 'Kodi TV / IPTV Manager'),
+30061: ('Enable Kodi TV integration', 'Kodi TV-integratie inschakelen'),
+30062: ('Choose Kodi TV channels', 'Kodi TV-zenders kiezen'),
+30063: ('Refresh channels and guide now', 'Zenders en gids nu vernieuwen'),
+30064: ('Configure IPTV Simple with IPTV Manager', 'IPTV Simple instellen via IPTV Manager'),
+30065: ('Open IPTV Manager settings', 'Instellingen IPTV Manager openen'),
+30066: ('Install IPTV Manager', 'IPTV Manager installeren'),
+30067: ('Replay guide days (including today)', 'Dagen in terugkijkgids (inclusief vandaag)'),
+30068: ('Sign in first. Initial guide import can take several minutes. Tomorrow is also included.', 'Log eerst in. De eerste gidsimport kan enkele minuten duren. Morgen wordt ook meegenomen.'),
+30070: ('Use all Kodi TV channels', 'Alle Kodi TV-zenders gebruiken'),
 30052: ('The addon encountered an internal error. Please report the full code below.', 'Er is een interne fout in de add-on opgetreden. Meld de volledige code hieronder.'),
 30001: ('Live TV', 'Live tv'),
 30002: ('Replay / TV guide', 'Terugkijken / tv-gids'),

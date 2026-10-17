@@ -3,6 +3,7 @@ import json
 import os
 import time
 from urllib.request import Request, urlopen
+from urllib.parse import urlparse
 
 from .storage import read_json, write_json
 
@@ -23,7 +24,10 @@ def validate(value):
         if not isinstance(item.get('name'), str) or not item['name'].strip():
             raise ValueError('Invalid channel name')
         number = str(item.get('channelno', ''))
+        logo = item.get('icon', '')
+        logo = logo if isinstance(logo, str) and urlparse(logo).scheme == 'https' else ''
         rows.append({'ID': channel, 'name': item['name'], 'channelno': number,
+                     'logo': logo, 'replay': str(item.get('replay', '1')) == '1',
                      'physicalChannels': [{'mediaID': media}]})
     return sorted(rows, key=lambda row: (int(row['channelno']) if row['channelno'].isdigit() else 10000, row['name']))
 

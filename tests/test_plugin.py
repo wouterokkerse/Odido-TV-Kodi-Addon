@@ -99,6 +99,54 @@ class PluginTests(unittest.TestCase):
         plugin.dialog.notification.assert_not_called()
         self.gui.Window.return_value.clearProperty.assert_called_with('plugin.video.odidotv.last_guide_error')
 
+    def test_iptv_callback_is_background_only_and_uses_existing_session(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=iptv_channels&port=23456')
+        plugin.addon.getSetting.side_effect = lambda key: {'iptv.enabled': 'true', 'iptv.selected': '["18"]'}.get(key, '')
+        plugin.client.channel_rows.return_value = [{'ID': '18', 'name': 'Channel', 'channelno': '1'}]
+        with patch.object(module, 'send_iptv') as sender:
+            plugin.dispatch()
+            self.assertEqual(sender.call_args.args[:2], ('23456', 'channels'))
+            payload = sender.call_args.args[2]()
+        self.assertEqual(payload['streams'][0]['id'], 'odido.18')
+        plugin.dialog.input.assert_not_called()
+        plugin.dialog.ok.assert_not_called()
+        self.kplugin.endOfDirectory.assert_not_called()
+        self.kplugin.setResolvedUrl.assert_not_called()
+
+    def test_disabled_iptv_export_does_not_query_provider(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=iptv_epg&port=23456')
+        plugin.addon.getSetting.return_value = 'false'
+        with patch.object(module, 'send_iptv') as sender:
+            plugin.dispatch()
+            self.assertEqual(sender.call_args.args[2](), {'version': 1, 'epg': {}})
+        plugin.client.channel_rows.assert_not_called()
+        plugin.dialog.input.assert_not_called()
+
+    def test_channel_picker_preserves_cancel_and_stores_explicit_selection(self):
+        plugin = self.plugin('?action=iptv_select')
+        plugin.addon.getSetting.return_value = ''
+        plugin.client.channel_rows.return_value = [{'ID': '18', 'name': 'First'}, {'ID': '19', 'name': 'Second'}]
+        plugin.dialog.multiselect.return_value = None
+        plugin.dispatch()
+        plugin.addon.setSetting.assert_not_called()
+        plugin.dialog.multiselect.return_value = [1]
+        plugin.dispatch()
+        plugin.addon.setSetting.assert_called_once_with('iptv.selected', '["19"]')
+
+    def test_native_tv_channel_link_resolves_through_working_relay(self):
+        from resources.lib.iptv import playback_url
+        from urllib.parse import urlparse
+        plugin = self.plugin('?' + urlparse(playback_url('channel', '141430714', title='NPO 1')).query)
+        plugin.handle = -1
+        plugin.client.stream.return_value = {'url': 'https://example.test/signed.mpd', 'license': '', 'custom_data': ''}
+        plugin.dispatch()
+        plugin.client.stream.assert_called_once_with('channel', '141430714', '')
+        self.assertEqual(self.kplugin.setResolvedUrl.call_args.args[:2], (-1, True))
+        self.assertEqual(self.kplugin.setResolvedUrl.call_args.args[2].kwargs['path'],
+                         'http://127.0.0.1:12345/secret/session/manifest.mpd')
+
     def test_device_limit_has_specific_guidance_without_retry(self):
         from resources.lib import plugin as module
         from resources.lib.api import OdidoError

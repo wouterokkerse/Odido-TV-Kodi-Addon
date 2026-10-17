@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.odidotv" name="Odido TV (unofficial)" version="0.1.8" provider-name="Community">
+<addon id="plugin.video.odidotv" name="Odido TV (unofficial)" version="0.2.0" provider-name="Community">
   <requires>
     <import addon="xbmc.python" version="3.0.1"/>
     <import addon="inputstream.adaptive" version="20.3.0"/>
     <import addon="script.module.inputstreamhelper" version="0.6.0"/>
+    <import addon="service.iptv.manager" version="0.2.3" optional="true"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.service" library="service.py"/>

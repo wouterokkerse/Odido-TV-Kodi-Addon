@@ -14,6 +14,7 @@ import xbmcvfs
 from .api import Client, OdidoError, AuthError
 from .storage import SavedLists, write_json
 from .tvtime import local_time
+from .iptv import Exporter, selection, send as send_iptv
 from .relay import PROPERTY as RELAY_PROPERTY, RelayError, register_playback
 
 STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
@@ -24,7 +25,7 @@ STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
            'today': 30025, 'drm_missing': 30026, 'expired': 30027, 'signed_out': 30028,
            'saved_diag': 30030, 'not_yet': 30032, 'partial_guide': 30035,
            'device_limit': 30049, 'relay_unavailable': 30050, 'playback_error': 30051,
-           'internal_error': 30052}
+           'internal_error': 30052, 'iptv_channels': 30062}
 PLAYING_PROPERTY = 'plugin.video.odidotv.manifest'
 
 
@@ -179,6 +180,48 @@ class Plugin:
         xbmcplugin.setContent(self.handle, 'episodes')
         self.finish()
 
+    def iptv_select(self):
+        if not self.require_login():
+            return
+        rows = self.client.channel_rows()
+        selected = selection(self.addon.getSetting('iptv.selected'))
+        indices = self.dialog.multiselect(self.tr('iptv_channels'), [row['name'] for row in rows],
+                                         preselect=[index for index, row in enumerate(rows)
+                                                    if selected is None or str(row['ID']) in selected])
+        if indices is not None:
+            self.addon.setSetting('iptv.selected', json.dumps([str(rows[index]['ID']) for index in indices]))
+
+    def iptv_export(self, kind):
+        def report(error):
+            code = error_code(error)
+            xbmcgui.Window(10000).setProperty('plugin.video.odidotv.last_iptv_error', code)
+            xbmc.log('[plugin.video.odidotv] IPTV_' + code, xbmc.LOGWARNING)
+
+        def produce():
+            window = xbmcgui.Window(10000)
+            window.clearProperty('plugin.video.odidotv.last_iptv_error')
+            if self.addon.getSetting('iptv.enabled') != 'true':
+                return {'version': 1, 'streams': []} if kind == 'channels' else {'version': 1, 'epg': {}}
+            exporter = Exporter(self.client, selection(self.addon.getSetting('iptv.selected')),
+                                cancelled=xbmc.Monitor().abortRequested)
+            if kind == 'channels':
+                return exporter.channels()
+            try:
+                days = int(self.addon.getSetting('iptv.days') or '7')
+            except ValueError:
+                raise OdidoError('IPTV_INVALID_DAYS') from None
+            result = exporter.epg(days)
+            if exporter.errors:
+                report(OdidoError(exporter.errors[0]))
+            return result
+
+        try:
+            send_iptv(self.params.get('port'), kind, produce, report)
+        except Exception as error:
+            # Manager runs callbacks in the background, often with handle -1.
+            # Never open login/error dialogs or resolve/end a directory here.
+            report(error)
+
     def search(self):
         # Explicit channel-title search; no speculative VOD search endpoint.
         query = self.dialog.input(self.tr('search')).strip().casefold()
@@ -232,6 +275,15 @@ class Plugin:
 
     def dispatch(self):
         action = self.params.get('action', 'root')
+        if action in ('iptv_channels', 'iptv_epg'):
+            self.iptv_export('channels' if action == 'iptv_channels' else 'epg')
+            return
+        if action == 'iptv_select':
+            self.iptv_select()
+            return
+        if action == 'iptv_all':
+            self.addon.setSetting('iptv.selected', '')
+            return
         if action in ('live', 'replay', 'guide', 'search', 'play') and not self.require_login():
             if action == 'play':
                 xbmcplugin.setResolvedUrl(self.handle, False, xbmcgui.ListItem())
@@ -264,10 +316,11 @@ class Plugin:
             path = os.path.join(self.profile, 'diagnostics.json')
             last_error = xbmcgui.Window(10000).getProperty('plugin.video.odidotv.last_playback_error')
             guide_error = xbmcgui.Window(10000).getProperty('plugin.video.odidotv.last_guide_error')
+            iptv_error = xbmcgui.Window(10000).getProperty('plugin.video.odidotv.last_iptv_error')
             write_json(path, {'addon_version': self.addon.getAddonInfo('version'),
                              'kodi_version': xbmc.getInfoLabel('System.BuildVersion'),
                              'session_saved': self.client.logged_in, 'last_playback_error': last_error,
-                             'last_guide_error': guide_error})
+                             'last_guide_error': guide_error, 'last_iptv_error': iptv_error})
             self.dialog.ok('Odido TV', self.tr('saved_diag') + '\n' + path +
                            ('\n' + self.tr('playback_error') + ': ' + last_error if last_error else ''))
         elif action == 'unavailable':

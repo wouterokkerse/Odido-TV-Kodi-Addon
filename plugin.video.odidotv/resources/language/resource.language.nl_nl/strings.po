@@ -2,6 +2,46 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30060"
+msgid "Kodi TV / IPTV Manager"
+msgstr "Kodi TV / IPTV Manager"
+
+msgctxt "#30061"
+msgid "Enable Kodi TV integration"
+msgstr "Kodi TV-integratie inschakelen"
+
+msgctxt "#30062"
+msgid "Choose Kodi TV channels"
+msgstr "Kodi TV-zenders kiezen"
+
+msgctxt "#30063"
+msgid "Refresh channels and guide now"
+msgstr "Zenders en gids nu vernieuwen"
+
+msgctxt "#30064"
+msgid "Configure IPTV Simple with IPTV Manager"
+msgstr "IPTV Simple instellen via IPTV Manager"
+
+msgctxt "#30065"
+msgid "Open IPTV Manager settings"
+msgstr "Instellingen IPTV Manager openen"
+
+msgctxt "#30066"
+msgid "Install IPTV Manager"
+msgstr "IPTV Manager installeren"
+
+msgctxt "#30067"
+msgid "Replay guide days (including today)"
+msgstr "Dagen in terugkijkgids (inclusief vandaag)"
+
+msgctxt "#30068"
+msgid "Sign in first. Initial guide import can take several minutes. Tomorrow is also included."
+msgstr "Log eerst in. De eerste gidsimport kan enkele minuten duren. Morgen wordt ook meegenomen."
+
+msgctxt "#30070"
+msgid "Use all Kodi TV channels"
+msgstr "Alle Kodi TV-zenders gebruiken"
+
 msgctxt "#30052"
 msgid "The addon encountered an internal error. Please report the full code below."
 msgstr "Er is een interne fout in de add-on opgetreden. Meld de volledige code hieronder."

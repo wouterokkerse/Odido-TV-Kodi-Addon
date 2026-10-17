@@ -1,4 +1,4 @@
-# Odido TV for Kodi — 0.1.8 live programme update
+# Odido TV for Kodi — 0.2.0 Kodi TV integration
 
 A standalone, unofficial Odido TV addon targeting **Kodi 21.2**.
 
@@ -13,18 +13,19 @@ reached. Updating the addon retains the existing device ID, session and lists.
 
 Playback handling follows the public protocol and redirect behavior documented
 in [wouterokkerse/dut-iptv](https://github.com/wouterokkerse/dut-iptv).
-All **102 automated tests** pass using synthetic API/CDN responses and Kodi
+All **122 automated tests** pass using synthetic API/CDN responses and Kodi
 doubles. The development environment could not run full Kodi/Widevine playback;
 the subscriber's device testing supplies the live-service confirmation.
 
 Download the installable addon:
-[plugin.video.odidotv-0.1.8.zip](downloads/plugin.video.odidotv-0.1.8.zip).
+[plugin.video.odidotv-0.2.0.zip](downloads/plugin.video.odidotv-0.2.0.zip).
 The unpacked Python source is in [plugin.video.odidotv](plugin.video.odidotv),
-with tests and reproducible packaging scripts alongside it.
+with tests and reproducible packaging scripts alongside it. Version 0.2.0 adds
+optional IPTV Manager integration; native Kodi TV operation needs device testing.
 
 ## Install / update
 
-1. Install `plugin.video.odidotv-0.1.8.zip` through **Add-ons → Install from zip
+1. Install `plugin.video.odidotv-0.2.0.zip` through **Add-ons → Install from zip
    file**, over the existing addon. Keep its addon data.
 2. **Fully quit Kodi and start it again.** The updated playback service must be
    restarted; reopening only the addon leaves the old service running.
@@ -48,6 +49,79 @@ it does not unregister the device on Odido's servers.
 request sends it as `authenticateDevice.deviceName`. Changing the name does not
 change the physical device ID. Current Odido acceptance of the label field is
 still unverified.
+
+## Kodi TV, IPTV Simple and IPTV Manager
+
+Version 0.2.0 exports channels and EPG through
+[IPTV Manager](https://github.com/add-ons/service.iptv.manager). IPTV Manager
+writes the M3U playlist/XMLTV guide consumed by IPTV Simple. The addon exports
+stable channel IDs, channel numbers, catalogue logos and **plugin playback
+links**. Signed manifest URLs, Odido cookies, PINs, CSRF and licence data are not
+exported. A missing catalogue logo uses the addon icon.
+
+1. Install this update and fully restart Kodi. Open Odido TV and confirm you are
+   signed in and can play a channel.
+2. Open **Odido TV → Settings → Kodi TV / IPTV Manager**. Install a Kodi 21
+   compatible **IPTV Manager** from Kodi's repository if it is not installed.
+3. Enable **Enable Kodi TV integration** and save the settings. It is off by
+   default, so installing this update alone does not reconfigure Kodi TV.
+4. Use **Choose Kodi TV channels** to select the channels in your subscription.
+   All catalogue channels are selected initially. A smaller selection speeds up
+   the first guide import. Cancelling the picker preserves the selection;
+   selecting none exports none. **Use all Kodi TV channels** resets it.
+5. Choose **Configure IPTV Simple with IPTV Manager**. IPTV Manager asks before
+   applying its IPTV Simple configuration. Existing playlist/guide settings can
+   be replaced, so retain your current settings if you use another IPTV source.
+6. Choose **Refresh channels and guide now**. The first import can take several
+   minutes. IPTV Manager manages future refreshes in its own settings.
+7. Open Kodi's **TV → Channels / Guide**. If channels do not appear immediately,
+   verify IPTV Simple is enabled and restart Kodi after the import completes.
+
+On Kodi 21, IPTV Simple can have multiple instances. If the automatic setup does
+not configure the active instance, open **IPTV Simple → Configure → Add/Manage
+addon configuration**, select the intended instance and set its local playlist to
+`special://profile/addon_data/service.iptv.manager/playlist.m3u8` and XMLTV guide to
+`special://profile/addon_data/service.iptv.manager/epg.xml`. Enable catchup in that
+instance for replay links. Keep IPTV Manager's guide timeshift at zero: exported
+programme times include UTC offsets. Configuration labels vary with IPTV Simple
+version. The addon does not directly write IPTV Simple instance files.
+
+The EPG contains **seven calendar days including today, plus tomorrow** by
+default. Choose 1, 3 or 7 replay-guide days in Odido settings. For programmes
+already broadcast, replay-capable channels include an XMLTV catchup link back to
+the existing replay playback route. Future programmes appear in the guide without
+a playback link. Odido still decides replay availability, subscription rights,
+parental access and concurrent stream limits when playback starts.
+
+Channel selection applies to Kodi TV exports only. The catalogue is not an
+entitlement list: selecting a channel does not subscribe to it. Unsupported or
+retired catalogue entries may have no EPG or fail at playback. Native recording,
+server-side timers and timeshift controls are not added by this integration.
+
+Guide refreshes use groups of at most 20 channels and individual fallback for a
+provider-rejected group. Today's guide is cached for 15 minutes, tomorrow for an
+hour and past days for a day; old files outside the configured window are pruned.
+A failed channel retains its previously cached schedule when available. Refresh
+stops further provider requests on network failure, retains cached data and
+records the safe error code. Expired/auth-refused sessions require signing in
+through the addon; background refresh never opens credential prompts.
+
+IPTV Manager's callback connection opens **before** loading the catalogue/guide,
+meeting its initial connection timeout. Versioned JSON is sent with a complete
+write and ASCII escapes for Unicode titles, matching the manager's chunk decoder.
+The callback destination is always loopback. No playback relay ports or credentials
+are embedded in the exported links. Native TV playback uses the same Widevine and
+local media relay as the working addon, with a fresh playback URL per tune.
+
+If importing fails, use **Export diagnostics** in Odido TV and inspect
+`last_iptv_error`. `LOGIN_REQUIRED` means sign in inside Odido first;
+`IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
+retain their safe stage code. No raw responses or exception messages are logged.
+
+All 122 unit tests pass. A separate compatibility check ran these payloads through
+IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
+catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
+could not be run in this workspace; they require testing on your Kodi device.
 
 ## Live programme changes in 0.1.8
 
@@ -161,7 +235,8 @@ are kept in memory and are not dumped to disk.
 * Playback heartbeat, attempted every 60 seconds during this addon's video.
 
 Film/series catalogue browsing, recordings, purchases, cloud lists, profiles,
-Trakt, library export and PVR integration are not implemented. Kodi 22 is outside
+Trakt and library export are not implemented. Optional native TV integration is
+provided through IPTV Manager; native recordings/timers are not implemented. Kodi 22 is outside
 the declared target. Subscription, location, concurrent-stream, parental and device
 restrictions still apply. The guide uses Amsterdam time and calendar days.
 

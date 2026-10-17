@@ -118,3 +118,34 @@ the reference's api_get_info/live branch and this addon's working stream startup
 Partial successes are retained. No API error definitions or provider limits are
 assumed. 102 synthetic tests pass. The subscriber subsequently confirmed that the live
 menu works with 0.1.8; no independent service validation was performed here.
+
+## 0.2.0 IPTV Manager integration
+
+Read add-ons/service.iptv.manager at master commit
+382c90d40d84988b883083ca117d35e4ac34e8f7:
+
+* resources/lib/modules/addon.py: discovery settings iptv.enabled,
+  iptv.channels_uri and iptv.epg_uri; plugin URI invocation with a loopback TCP
+  port; connect within 10 seconds, then read JSON until connection close.
+* tests/home/addons/plugin.video.example/plugin.py and resources/settings.xml:
+  JSON-STREAMS / JSON-EPG version 1 payload fields and ISO programme timestamps.
+* resources/lib/modules/iptvsimple.py: channel ID/number/logo mapping, playlist
+  catchup=vod and per-programme XMLTV catchup-id links on Kodi 19+.
+* resources/lib/functions.py: refresh and setup-iptv-simple script actions.
+
+Implementation uses original standalone stdlib code and an optional dependency;
+no IPTV Manager implementation is bundled. Setup uses Manager's supported script
+entry point instead of directly modifying PVR settings. Kodi 21 multi-instance
+configuration may require selecting the instance manually, documented in README.
+
+Extended the same dut-epg catalogue snapshot with its public icon/replay fields.
+No channel/media IDs changed. Exported stream and catchup URLs contain public
+content IDs and route back to the existing login/Widevine/relay playback flow.
+
+Validation: 122 synthetic unit tests. Additionally executed the upstream
+IptvSimple class's actual write_playlist/write_epg methods in an isolated
+scratch harness, using installed dateutil and a minimal Kodi-utils double.
+The resulting M3U/XMLTV parsed successfully with matching odido.* channel IDs,
+Unicode labels and a plugin URL in XMLTV catchup-id. Upstream source was used
+only in the development scratch directory, not bundled or published. This is a
+writer-level contract check, not a full Manager socket or Kodi PVR playback test.
