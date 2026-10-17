@@ -18,6 +18,7 @@ from .tvtime import local_time
 from .iptv import Exporter, selection, send as send_iptv
 from .pvr import configure as configure_pvr
 from .playmode import target as playback_target
+from .tvskin import install as install_tv_skin, SKIN_ID
 from .relay import PROPERTY as RELAY_PROPERTY, RelayError, register_playback
 
 STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
@@ -34,7 +35,7 @@ STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
            'yes': 30076, 'no': 30077, 'iptv_error': 30078, 'iptv_manager_missing': 30079,
            'pvr_missing': 30080, 'pvr_configured': 30081, 'pvr_instance': 30082,
            'buffer_start': 30084, 'watch_live': 30087, 'not_started': 30091,
-           'no_replay': 30092}
+           'no_replay': 30092, 'skin_preparing': 30094, 'skin_unsupported': 30096}
 PLAYING_PROPERTY = 'plugin.video.odidotv.manifest'
 
 
@@ -316,6 +317,39 @@ class Plugin:
         lines.append(self.tr('pvr_instance') + ': ' + (filename or 'NOT_CONFIGURED'))
         self.dialog.textviewer(self.tr('iptv_check'), '\n'.join(lines))
 
+    def tv_skin(self, restore=False):
+        if restore:
+            skin = 'skin.estuary'
+        else:
+            if xbmc.getSkinDir() not in ('skin.estuary', SKIN_ID):
+                self.dialog.ok('Odido TV', self.tr('skin_unsupported'))
+                return
+            progress = xbmcgui.DialogProgress()
+            progress.create('Odido TV', self.tr('skin_preparing'))
+            monitor = xbmc.Monitor()
+            try:
+                source = xbmcaddon.Addon('skin.estuary').getAddonInfo('path')
+                install_tv_skin(xbmcvfs, source, xbmcvfs.translatePath('special://home/addons/'),
+                                cancelled=lambda: progress.iscanceled() or monitor.abortRequested())
+            except ValueError as error:
+                code = str(error)
+                raise OdidoError(code if code.startswith('SKIN_') and code.replace('_', '').isalnum() else 'SKIN_SETUP_FAILED') from None
+            finally:
+                progress.close()
+            xbmc.executebuiltin('UpdateLocalAddons()', True)
+            result = json.loads(xbmc.executeJSONRPC(json.dumps({
+                'jsonrpc': '2.0', 'id': 1, 'method': 'Addons.SetAddonEnabled',
+                'params': {'addonid': SKIN_ID, 'enabled': True}})))
+            if 'error' in result:
+                raise OdidoError('SKIN_ENABLE_FAILED')
+            skin = SKIN_ID
+        # Kodi handles its normal "keep this skin?" dialog and rollback.
+        result = json.loads(xbmc.executeJSONRPC(json.dumps({
+            'jsonrpc': '2.0', 'id': 1, 'method': 'Settings.SetSettingValue',
+            'params': {'setting': 'lookandfeel.skin', 'value': skin}})))
+        if 'error' in result or result.get('result') is not True:
+            raise OdidoError('SKIN_SELECT_FAILED')
+
     def search(self):
         # Explicit channel-title search; no speculative VOD search endpoint.
         query = self.dialog.input(self.tr('search')).strip().casefold()
@@ -390,6 +424,9 @@ class Plugin:
             return
         if action == 'iptv_setup':
             self.iptv_refresh(setup=True)
+            return
+        if action in ('tv_skin', 'tv_skin_restore'):
+            self.tv_skin(restore=action == 'tv_skin_restore')
             return
         if action in ('live', 'replay', 'guide', 'search', 'play') and not self.require_login():
             if action == 'play':

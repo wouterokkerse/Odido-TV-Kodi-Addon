@@ -225,3 +225,34 @@ without an EPG reload, while the local router blocks them before broadcast.
 channel-request contracts for both modes, current-to-past link transitions,
 non-replay channel limits, future entry activation and retained DASH buffer depth
 and timeline. Real Odido buffer length/seek behavior remains a device check.
+
+## 0.2.4 native TV OSD button
+
+The subscriber supplied a screenshot highlighting Estuary's lower-left previous
+button during native Kodi TV playback. They want that button to seek to the first
+available point in the same live stream. The 0.2.3 opening-mode change did not
+replace this Kodi-owned OSD action.
+
+Read Kodi Omega sources:
+* addons/skin.estuary/xml/VideoOSD.xml: control 600 calls PlayerControl(Previous).
+* interfaces/builtins/PlayerBuiltins.cpp maps Previous to ACTION_PREV_ITEM and
+  supports PlayerControl(SeekPercentage(n)).
+* pvr/guilib/PVRGUIActionsPlayback.cpp::SeekBackward computes an EPG event boundary
+  when EPG exists, falling back to minimum buffer time only when no EPG is found.
+* application/Application.cpp::SeekPercentage forwards to the active player;
+  cores/VideoPlayer/VideoPlayer.cpp::SeekPercentage(0) requests seek time zero.
+
+Original standalone tvskin.py prepares a local copy of installed Estuary and
+patches only control 600's onclick actions: seek percentage zero for native live
+TV, original Previous otherwise. It leaves stock files untouched, copies original
+assets/licences on-device and selects the separate skin through Kodi's settings
+API. Kodi's normal skin confirmation is retained. The transformation and installer
+source are published; upstream skin XML/assets are not bundled in the repository.
+The generated local skin includes a modifications notice and original authors.
+
+163 unit tests pass, including XML action guards, preserved movie controls,
+binary asset/licence copy, idempotence, destination collision, cleanup and skin
+selection/restore calls. A separate development check patched and parsed Kodi
+Omega's actual VideoOSD.xml from GitHub and verified control 600's two actions.
+Real Kodi GUI skin registration/switch and current-buffer seeking remain a device
+test; the addon cannot create unavailable live history by changing this button.

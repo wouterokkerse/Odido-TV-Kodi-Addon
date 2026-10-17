@@ -2,6 +2,30 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30093"
+msgid "Enable TV start button (Estuary copy)"
+msgstr "TV-startknop inschakelen (Estuary-kopie)"
+
+msgctxt "#30094"
+msgid "Preparing an Estuary copy with the TV buffer-start button..."
+msgstr "Estuary-kopie met TV-bufferstartknop voorbereiden..."
+
+msgctxt "#30095"
+msgid "Restore standard Estuary"
+msgstr "Standaard Estuary herstellen"
+
+msgctxt "#30096"
+msgid "This button integration supports Estuary. Your current skin has not been changed."
+msgstr "Deze knopintegratie ondersteunt Estuary. Je huidige skin is niet gewijzigd."
+
+msgctxt "#30097"
+msgid "Kodi TV playback button"
+msgstr "Afspeelknop Kodi TV"
+
+msgctxt "#30098"
+msgid "The Estuary copy changes the start button for all native TV playback. Movies keep the normal previous action."
+msgstr "De Estuary-kopie wijzigt de startknop voor alle normale TV-weergave. Films behouden de normale vorige-actie."
+
 msgctxt "#30091"
 msgid "This programme has not started yet."
 msgstr "Dit programma is nog niet begonnen."

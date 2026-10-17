@@ -1,4 +1,4 @@
-# Odido TV for Kodi — 0.2.3 live-buffer playback
+# Odido TV for Kodi — 0.2.4 native TV start button
 
 A standalone, unofficial Odido TV addon targeting **Kodi 21.2**.
 
@@ -13,12 +13,12 @@ reached. Updating the addon retains the existing device ID, session and lists.
 
 Playback handling follows the public protocol and redirect behavior documented
 in [wouterokkerse/dut-iptv](https://github.com/wouterokkerse/dut-iptv).
-All **151 automated tests** pass using synthetic API/CDN responses and Kodi
+All **163 automated tests** pass using synthetic API/CDN responses and Kodi
 doubles. The development environment could not run full Kodi/Widevine playback;
 the subscriber's device testing supplies the live-service confirmation.
 
 Download the installable addon:
-[plugin.video.odidotv-0.2.3.zip](downloads/plugin.video.odidotv-0.2.3.zip).
+[plugin.video.odidotv-0.2.4.zip](downloads/plugin.video.odidotv-0.2.4.zip).
 The unpacked Python source is in [plugin.video.odidotv](plugin.video.odidotv),
 with tests and reproducible packaging scripts alongside it. Version 0.2.0 adds
 optional IPTV Manager integration; a subscriber confirmed the native Kodi TV integration works after 0.2.2.
@@ -27,7 +27,7 @@ device testing.
 
 ## Install / update
 
-1. Install `plugin.video.odidotv-0.2.3.zip` through **Add-ons → Install from zip
+1. Install `plugin.video.odidotv-0.2.4.zip` through **Add-ons → Install from zip
    file**, over the existing addon. Keep its addon data.
 2. **Fully quit Kodi and start it again.** The updated playback service must be
    restarted; reopening only the addon leaves the old service running.
@@ -51,6 +51,53 @@ it does not unregister the device on Odido's servers.
 request sends it as `authenticateDevice.deviceName`. Changing the name does not
 change the physical device ID. Current Odido acceptance of the label field is
 still unverified.
+
+## The lower-left start button in native Kodi TV playback
+
+Version 0.2.4 adds an optional integration for the **exact lower-left previous /
+start button in Estuary's native TV playback controls**. The 0.2.3 start-position
+options affected opening a stream; they did not change this Kodi-owned button.
+
+Kodi 21 Estuary binds that button to PlayerControl(Previous). During native TV
+playback, Kodi interprets that as seeking to an EPG programme boundary. This can
+differ from the earliest available position in the live stream. An IPTV export
+or a stream-opening property cannot replace the skin's button action.
+
+To enable the button change:
+
+1. Install 0.2.4 and restart Kodi.
+2. Open **Odido settings → Playback → Enable TV start button (Estuary copy)**.
+3. The addon prepares and selects **Estuary (TV buffer start)**. If Kodi asks
+   whether to keep the skin, choose Yes.
+4. Open native **TV**, play a channel and press the lower-left start button.
+
+The optional skin copy binds that same button to **PlayerControl(SeekPercentage(0))**
+while playing native TV. This asks Kodi to seek to position zero in the current
+stream, without starting another stream, fetching a replay or changing DRM.
+InputStream Adaptive and the provider determine the earliest available segment.
+It cannot recover segments removed from Odido's live buffer.
+
+**The modified button applies to all native TV playback in the copied skin.**
+Movies and other playback retain the original Previous action, including chapter
+and playlist behavior. Opening live channels still honors the separate live-edge /
+buffer-start setting described below.
+
+Stock Estuary's files are not modified. The action copies the installed Estuary
+through Kodi's virtual filesystem, including its textures, fonts and original
+licence files, into a separate local skin addon. No complete skin or third-party
+assets are bundled in this addon. Other active skins are not replaced; the action
+supports stock Estuary and this generated copy only. Repeating setup reuses the
+copy rather than creating additional skins. Cancelled/failed initial copies are
+removed before registration.
+
+Use **Playback → Restore standard Estuary** or Kodi's **Interface → Skin** selector
+to restore the original controls. The copied skin has its own skin preferences;
+existing preferences in stock Estuary remain intact. A custom copied skin does
+not automatically inherit future stock-skin updates.
+
+Validation includes 163 unit tests and a patch/parse check against Kodi Omega's
+actual Estuary VideoOSD.xml. The device-only copy, skin switch/confirmation and
+live seek still require testing on Kodi; this environment cannot run its GUI.
 
 ## Watch live or open the beginning of the live buffer
 
@@ -172,7 +219,7 @@ If importing fails, use **Export diagnostics** in Odido TV and inspect
 `IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
 retain their safe stage code. No raw responses or exception messages are logged.
 
-All 151 unit tests pass. A separate compatibility check ran these payloads through
+All 163 unit tests pass. A separate compatibility check ran these payloads through
 IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
 catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
 could not be run in this workspace; they require testing on your Kodi device.

@@ -3,6 +3,12 @@ import json
 from pathlib import Path
 
 STRINGS = {
+30093: ('Enable TV start button (Estuary copy)', 'TV-startknop inschakelen (Estuary-kopie)'),
+30094: ('Preparing an Estuary copy with the TV buffer-start button...', 'Estuary-kopie met TV-bufferstartknop voorbereiden...'),
+30095: ('Restore standard Estuary', 'Standaard Estuary herstellen'),
+30096: ('This button integration supports Estuary. Your current skin has not been changed.', 'Deze knopintegratie ondersteunt Estuary. Je huidige skin is niet gewijzigd.'),
+30097: ('Kodi TV playback button', 'Afspeelknop Kodi TV'),
+30098: ('The Estuary copy changes the start button for all native TV playback. Movies keep the normal previous action.', 'De Estuary-kopie wijzigt de startknop voor alle normale TV-weergave. Films behouden de normale vorige-actie.'),
 30091: ('This programme has not started yet.', 'Dit programma is nog niet begonnen.'),
 30092: ('This programme has ended and this channel does not offer replay.', 'Dit programma is afgelopen en deze zender biedt geen terugkijken.'),
 30083: ('Start live channels at', 'Livezenders starten op'),

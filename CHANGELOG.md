@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.4
+
+* Address the actual native TV OSD start button, rather than only stream startup.
+* Add an optional local Estuary copy whose control 600 seeks to 0% during native
+  TV playback and retains Previous for movies and other playback.
+* Prepare the skin from the device's installed Estuary using Kodi VFS; preserve
+  stock files, all assets and original licences. Support cancellation, cleanup,
+  repeat setup and refusal to overwrite unrelated destinations/skins.
+* Add enable/restore actions in Playback settings. Skin selection uses Kodi's
+  standard API and confirmation/rollback behavior; installing the addon alone
+  does not change the active skin.
+* No replay requests, stream restarts, DRM changes or retention-window edits.
+* 163 tests pass, plus a patch check against actual Kodi 21 Estuary XML. Native
+  skin activation and seeking require device testing.
+
 ## 0.2.3
 
 * Add Watch live and Play from beginning of live buffer channel context actions.

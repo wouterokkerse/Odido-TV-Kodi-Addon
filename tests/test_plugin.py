@@ -308,6 +308,42 @@ class PluginTests(unittest.TestCase):
         self.kplugin.setResolvedUrl.call_args.args[2].setProperty.assert_any_call(
             'inputstream.adaptive.play_timeshift_buffer', 'true')
 
+    def test_skin_integration_registers_copy_and_selects_it_using_kodi_settings(self):
+        import json
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=tv_skin')
+        self.kodi.getSkinDir.return_value = 'skin.estuary'
+        self.kodi.executeJSONRPC.side_effect = ['{"result":"OK"}', '{"result":true}']
+        with patch.object(module, 'install_tv_skin') as installer:
+            plugin.dispatch()
+        installer.assert_called_once()
+        self.kodi.executebuiltin.assert_called_once_with('UpdateLocalAddons()', True)
+        requests = [json.loads(call.args[0]) for call in self.kodi.executeJSONRPC.call_args_list]
+        self.assertEqual(requests[0]['params'], {'addonid': 'skin.estuary.odidotv', 'enabled': True})
+        self.assertEqual(requests[1]['params'], {'setting': 'lookandfeel.skin', 'value': 'skin.estuary.odidotv'})
+        self.gui.DialogProgress.return_value.close.assert_called_once()
+
+    def test_other_skin_is_not_silently_replaced(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=tv_skin')
+        self.kodi.getSkinDir.return_value = 'skin.other'
+        with patch.object(module, 'install_tv_skin') as installer:
+            plugin.dispatch()
+        installer.assert_not_called()
+        self.kodi.executeJSONRPC.assert_not_called()
+        plugin.dialog.ok.assert_called_once_with('Odido TV', '30096')
+
+    def test_standard_skin_restore_does_not_copy_or_delete_skins(self):
+        import json
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=tv_skin_restore')
+        self.kodi.executeJSONRPC.return_value = '{"result":true}'
+        with patch.object(module, 'install_tv_skin') as installer:
+            plugin.dispatch()
+        installer.assert_not_called()
+        request = json.loads(self.kodi.executeJSONRPC.call_args.args[0])
+        self.assertEqual(request['params'], {'setting': 'lookandfeel.skin', 'value': 'skin.estuary'})
+
     def test_channel_context_menu_has_both_live_positions(self):
         plugin = self.plugin('?action=live')
         plugin.client.channels.return_value = [channel()]
