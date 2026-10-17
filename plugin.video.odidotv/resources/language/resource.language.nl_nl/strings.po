@@ -2,6 +2,42 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30079"
+msgid "Install and enable IPTV Manager first, then retry."
+msgstr "Installeer en activeer eerst IPTV Manager en probeer opnieuw."
+
+msgctxt "#30071"
+msgid "Check Kodi TV integration"
+msgstr "Kodi TV-integratie controleren"
+
+msgctxt "#30072"
+msgid "Manager playlist file exists"
+msgstr "Afspeellijst van Manager aanwezig"
+
+msgctxt "#30073"
+msgid "Manager guide file exists"
+msgstr "Gidsbestand van Manager aanwezig"
+
+msgctxt "#30074"
+msgid "Channel export"
+msgstr "Zenderexport"
+
+msgctxt "#30075"
+msgid "Guide export"
+msgstr "Gidsexport"
+
+msgctxt "#30076"
+msgid "Yes"
+msgstr "Ja"
+
+msgctxt "#30077"
+msgid "No"
+msgstr "Nee"
+
+msgctxt "#30078"
+msgid "IPTV integration error"
+msgstr "Fout IPTV-integratie"
+
 msgctxt "#30060"
 msgid "Kodi TV / IPTV Manager"
 msgstr "Kodi TV / IPTV Manager"
@@ -15,8 +51,8 @@ msgid "Choose Kodi TV channels"
 msgstr "Kodi TV-zenders kiezen"
 
 msgctxt "#30063"
-msgid "Refresh channels and guide now"
-msgstr "Zenders en gids nu vernieuwen"
+msgid "Enable and refresh channels and guide now"
+msgstr "Inschakelen en zenders/gids nu vernieuwen"
 
 msgctxt "#30064"
 msgid "Configure IPTV Simple with IPTV Manager"

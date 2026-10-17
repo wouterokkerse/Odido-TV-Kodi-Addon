@@ -124,6 +124,68 @@ class PluginTests(unittest.TestCase):
         plugin.client.channel_rows.assert_not_called()
         plugin.dialog.input.assert_not_called()
 
+    def test_iptv_refresh_persists_discovery_before_running_manager(self):
+        from unittest.mock import call
+        plugin = self.plugin('?action=iptv_refresh')
+        self.kodi.getCondVisibility.return_value = True
+        order = Mock()
+        order.attach_mock(plugin.addon.setSetting, 'set')
+        order.attach_mock(self.kodi.executebuiltin, 'run')
+        plugin.dispatch()
+        self.assertEqual(order.mock_calls, [
+            call.set('iptv.channels_uri', 'plugin://plugin.video.odidotv/?action=iptv_channels'),
+            call.set('iptv.epg_uri', 'plugin://plugin.video.odidotv/?action=iptv_epg'),
+            call.set('iptv.enabled', 'true'), call.run('RunScript(service.iptv.manager,refresh)')])
+
+    def test_disabled_manager_prevents_refresh_and_shows_actionable_message(self):
+        plugin = self.plugin('?action=iptv_refresh')
+        self.kodi.getCondVisibility.return_value = False
+        plugin.dispatch()
+        plugin.addon.setSetting.assert_not_called()
+        self.kodi.executebuiltin.assert_not_called()
+        plugin.dialog.ok.assert_called_once_with('Odido TV', '30079')
+
+    def test_successful_callback_persists_count_after_send(self):
+        from resources.lib import plugin as module
+        from resources.lib.iptv import send
+        from resources.lib.storage import read_json
+        plugin = self.plugin('?action=iptv_channels&port=23456')
+        plugin.addon.getSetting.side_effect = lambda key: {'iptv.enabled': 'true', 'iptv.selected': ''}.get(key, '')
+        plugin.client.channel_rows.return_value = [{'ID': '18', 'name': 'Channel'}]
+        context = Mock()
+        context.__enter__ = Mock(return_value=Mock())
+        context.__exit__ = Mock()
+        def callback(port, kind, produce, report):
+            send(port, kind, produce, report, connect=Mock(return_value=context))
+        with patch.object(module, 'send_iptv', side_effect=callback):
+            plugin.dispatch()
+        status = read_json(Path(self.directory.name)/'iptv_export_channels.json')
+        self.assertEqual((status['phase'], status['count'], status['error']), ('sent', 1, ''))
+
+    def test_failed_callback_persists_error_without_provider_response(self):
+        from resources.lib import plugin as module
+        from resources.lib.storage import read_json
+        plugin = self.plugin('?action=iptv_channels&port=23456')
+        with patch.object(module, 'send_iptv', side_effect=ConnectionRefusedError('private URL')):
+            plugin.dispatch()
+        status = read_json(Path(self.directory.name)/'iptv_export_channels.json')
+        self.assertEqual(status['phase'], 'error')
+        self.assertIn('ConnectionRefusedError', status['error'])
+        self.assertNotIn('private', str(status))
+        plugin.dialog.ok.assert_not_called()
+
+    def test_status_screen_distinguishes_missing_callbacks_and_manager_files(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=iptv_status')
+        plugin.addon.getSetting.return_value = 'true'
+        self.kodi.getCondVisibility.return_value = True
+        with patch.object(module.xbmcvfs, 'exists', side_effect=[True, False], create=True):
+            plugin.dispatch()
+        message = plugin.dialog.ok.call_args.args[1]
+        self.assertEqual(message.count('NOT_CALLED'), 2)
+        self.assertIn('30072: 30076', message)  # Playlist exists.
+        self.assertIn('30073: 30077', message)  # Guide absent.
+
     def test_channel_picker_preserves_cancel_and_stores_explicit_selection(self):
         plugin = self.plugin('?action=iptv_select')
         plugin.addon.getSetting.return_value = ''

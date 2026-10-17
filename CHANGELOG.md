@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1
+
+* Add Check Kodi TV integration: enabled states, persistent channel/guide callback
+  phases and counts, and Manager playlist/XMLTV file presence.
+* Replace the direct Manager refresh button with Enable and refresh: validate
+  login/Manager enabled state, persist Odido discovery settings, then run Manager.
+* Display last IPTV export error in the diagnostics dialog.
+* Explain Kodi 21's per-instance/Migrated Config local-path configuration. This
+  update does not rewrite PVR instances or claim the reported cause is verified.
+* 127 tests pass, including discovery-save ordering, callback status persistence,
+  failed callback safety and output-file status reporting.
+
 ## 0.2.0
 
 * Add optional IPTV Manager v1 channel/EPG exports for native Kodi TV through

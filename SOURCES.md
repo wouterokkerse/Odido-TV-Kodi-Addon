@@ -149,3 +149,24 @@ The resulting M3U/XMLTV parsed successfully with matching odido.* channel IDs,
 Unicode labels and a plugin URL in XMLTV catchup-id. Upstream source was used
 only in the development scratch directory, not bundled or published. This is a
 writer-level contract check, not a full Manager socket or Kodi PVR playback test.
+
+## 0.2.1 import diagnostics and refresh preflight
+
+The user reports Manager appears to sync with Odido, but IPTV Simple's migrated
+configuration is empty/incomplete; exact active-instance paths were not provided.
+Inspected Kodi Omega's AddonSettings.cpp: legacy settings without type are valid
+hidden strings, so missing type was not treated as a verified defect. Inspected
+AddonBuiltins.cpp, filesystem/PluginDirectory.cpp and generic/ScriptRunner.cpp:
+RunPlugin uses [base URL, -1, options, resume], matching this addon's routing.
+
+Inspected kodi-pvr/pvr.iptvsimple Omega resources/settings.xml (legacy settings
+hidden for migration), resources/instance-settings.xml and
+src/iptvsimple/utilities/SettingsMigration.cpp. The migration is skipped when
+kodi_addon_instance_name is already populated; ongoing playback reads instance
+settings. This supports checking the migrated instance's local playlist/XMLTV
+paths, but does not establish the paths configured on the user's device.
+
+The new refresh preflight persists iptv.enabled and callback URIs before starting
+Manager; the diagnostic screen separates callback receipt, generation/send,
+Manager file creation and dependency enabled states. No PVR settings are rewritten.
+127 tests pass. Full Kodi PVR instance/socket validation still requires the device.

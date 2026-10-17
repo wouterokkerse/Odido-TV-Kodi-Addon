@@ -3,10 +3,19 @@ import json
 from pathlib import Path
 
 STRINGS = {
+30079: ('Install and enable IPTV Manager first, then retry.', 'Installeer en activeer eerst IPTV Manager en probeer opnieuw.'),
+30071: ('Check Kodi TV integration', 'Kodi TV-integratie controleren'),
+30072: ('Manager playlist file exists', 'Afspeellijst van Manager aanwezig'),
+30073: ('Manager guide file exists', 'Gidsbestand van Manager aanwezig'),
+30074: ('Channel export', 'Zenderexport'),
+30075: ('Guide export', 'Gidsexport'),
+30076: ('Yes', 'Ja'),
+30077: ('No', 'Nee'),
+30078: ('IPTV integration error', 'Fout IPTV-integratie'),
 30060: ('Kodi TV / IPTV Manager', 'Kodi TV / IPTV Manager'),
 30061: ('Enable Kodi TV integration', 'Kodi TV-integratie inschakelen'),
 30062: ('Choose Kodi TV channels', 'Kodi TV-zenders kiezen'),
-30063: ('Refresh channels and guide now', 'Zenders en gids nu vernieuwen'),
+30063: ('Enable and refresh channels and guide now', 'Inschakelen en zenders/gids nu vernieuwen'),
 30064: ('Configure IPTV Simple with IPTV Manager', 'IPTV Simple instellen via IPTV Manager'),
 30065: ('Open IPTV Manager settings', 'Instellingen IPTV Manager openen'),
 30066: ('Install IPTV Manager', 'IPTV Manager installeren'),
