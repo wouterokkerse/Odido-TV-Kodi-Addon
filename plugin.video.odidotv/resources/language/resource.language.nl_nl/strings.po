@@ -1,0 +1,143 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgctxt "#30052"
+msgid "The addon encountered an internal error. Please report the full code below."
+msgstr "Er is een interne fout in de add-on opgetreden. Meld de volledige code hieronder."
+
+msgctxt "#30001"
+msgid "Live TV"
+msgstr "Live tv"
+
+msgctxt "#30002"
+msgid "Replay / TV guide"
+msgstr "Terugkijken / tv-gids"
+
+msgctxt "#30005"
+msgid "Search channels"
+msgstr "Zenders zoeken"
+
+msgctxt "#30006"
+msgid "My list (this device)"
+msgstr "Mijn lijst (dit apparaat)"
+
+msgctxt "#30007"
+msgid "Watch later (this device)"
+msgstr "Kijk later (dit apparaat)"
+
+msgctxt "#30008"
+msgid "Sign in"
+msgstr "Inloggen"
+
+msgctxt "#30009"
+msgid "Sign out"
+msgstr "Uitloggen"
+
+msgctxt "#30010"
+msgid "Settings"
+msgstr "Instellingen"
+
+msgctxt "#30011"
+msgid "Export diagnostics"
+msgstr "Diagnostiek opslaan"
+
+msgctxt "#30012"
+msgid "No items found."
+msgstr "Geen items gevonden."
+
+msgctxt "#30015"
+msgid "Odido TV customer number"
+msgstr "Klantnummer Odido TV"
+
+msgctxt "#30016"
+msgid "Odido TV PIN"
+msgstr "Pincode Odido TV"
+
+msgctxt "#30017"
+msgid "Signed in."
+msgstr "Ingelogd."
+
+msgctxt "#30018"
+msgid "Sign in with your TV customer number and TV PIN from Mijn Odido."
+msgstr "Log in met je TV-klantnummer en TV-pincode uit Mijn Odido."
+
+msgctxt "#30020"
+msgid "Odido TV could not complete this request. Check your connection and subscription. This experimental build still needs subscriber testing."
+msgstr "Odido TV kon dit verzoek niet uitvoeren. Controleer je verbinding en abonnement. Deze experimentele versie moet nog met een abonnement worden getest."
+
+msgctxt "#30021"
+msgid "Add to My list"
+msgstr "Toevoegen aan Mijn lijst"
+
+msgctxt "#30022"
+msgid "Add to Watch later"
+msgstr "Toevoegen aan Kijk later"
+
+msgctxt "#30023"
+msgid "Remove from this list"
+msgstr "Verwijderen uit deze lijst"
+
+msgctxt "#30024"
+msgid "List updated."
+msgstr "Lijst bijgewerkt."
+
+msgctxt "#30025"
+msgid "Today"
+msgstr "Vandaag"
+
+msgctxt "#30026"
+msgid "Widevine or InputStream Adaptive is unavailable on this device."
+msgstr "Widevine of InputStream Adaptive is niet beschikbaar op dit apparaat."
+
+msgctxt "#30027"
+msgid "Your session expired or access was refused. Sign in again and check your TV subscription."
+msgstr "Je sessie is verlopen of toegang is geweigerd. Log opnieuw in en controleer je TV-abonnement."
+
+msgctxt "#30028"
+msgid "Session removed from this device."
+msgstr "Sessie verwijderd van dit apparaat."
+
+msgctxt "#30030"
+msgid "Diagnostics saved (no credentials or playback URLs):"
+msgstr "Diagnostiek opgeslagen (zonder inloggegevens of afspeel-URL’s):"
+
+msgctxt "#30032"
+msgid "Not yet broadcast"
+msgstr "Nog niet uitgezonden"
+
+msgctxt "#30035"
+msgid "Current programme information is unavailable."
+msgstr "Informatie over het huidige programma is niet beschikbaar."
+
+msgctxt "#30040"
+msgid "About this addon"
+msgstr "Over deze addon"
+
+msgctxt "#30045"
+msgid "Experimental — Kodi 21.2; PIN is not saved"
+msgstr "Experimenteel — Kodi 21.2; pincode wordt niet opgeslagen"
+
+msgctxt "#30046"
+msgid "Use your TV customer number and PIN, not your Mijn Odido password"
+msgstr "Gebruik je TV-klantnummer en pincode, niet je Mijn Odido-wachtwoord"
+
+msgctxt "#30047"
+msgid "Device name"
+msgstr "Apparaatnaam"
+
+msgctxt "#30048"
+msgid "Device name is sent at the next sign-in"
+msgstr "Apparaatnaam wordt bij de volgende login meegestuurd"
+
+msgctxt "#30049"
+msgid "Odido refused registration because of its device limit. Manage your registered devices in the official Odido service, then retry. Naming this device does not free a slot; this addon keeps the same device ID."
+msgstr "Odido heeft registratie geweigerd vanwege de apparaatlimiet. Beheer je geregistreerde apparaten via de officiële Odido-dienst en probeer opnieuw. Een apparaatnaam maakt geen plek vrij; deze addon behoudt hetzelfde apparaat-ID."
+
+msgctxt "#30050"
+msgid "Restart Kodi completely to start the updated playback service, then try the channel again."
+msgstr "Sluit Kodi volledig af en start opnieuw om de bijgewerkte afspeeldienst te starten. Probeer de zender daarna opnieuw."
+
+msgctxt "#30051"
+msgid "Last playback error"
+msgstr "Laatste afspeelfout"

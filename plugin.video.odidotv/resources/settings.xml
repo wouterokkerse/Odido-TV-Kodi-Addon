@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+  <category label="30040">
+    <setting id="device_name" type="text" label="30047" default="Kodi Odido TV"/>
+    <setting type="lsep" label="30048"/>
+    <setting type="lsep" label="30045"/>
+    <setting type="lsep" label="30046"/>
+  </category>
+</settings>

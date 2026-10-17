@@ -1,0 +1,143 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgctxt "#30052"
+msgid "The addon encountered an internal error. Please report the full code below."
+msgstr ""
+
+msgctxt "#30001"
+msgid "Live TV"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Replay / TV guide"
+msgstr ""
+
+msgctxt "#30005"
+msgid "Search channels"
+msgstr ""
+
+msgctxt "#30006"
+msgid "My list (this device)"
+msgstr ""
+
+msgctxt "#30007"
+msgid "Watch later (this device)"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Sign in"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Sign out"
+msgstr ""
+
+msgctxt "#30010"
+msgid "Settings"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Export diagnostics"
+msgstr ""
+
+msgctxt "#30012"
+msgid "No items found."
+msgstr ""
+
+msgctxt "#30015"
+msgid "Odido TV customer number"
+msgstr ""
+
+msgctxt "#30016"
+msgid "Odido TV PIN"
+msgstr ""
+
+msgctxt "#30017"
+msgid "Signed in."
+msgstr ""
+
+msgctxt "#30018"
+msgid "Sign in with your TV customer number and TV PIN from Mijn Odido."
+msgstr ""
+
+msgctxt "#30020"
+msgid "Odido TV could not complete this request. Check your connection and subscription. This experimental build still needs subscriber testing."
+msgstr ""
+
+msgctxt "#30021"
+msgid "Add to My list"
+msgstr ""
+
+msgctxt "#30022"
+msgid "Add to Watch later"
+msgstr ""
+
+msgctxt "#30023"
+msgid "Remove from this list"
+msgstr ""
+
+msgctxt "#30024"
+msgid "List updated."
+msgstr ""
+
+msgctxt "#30025"
+msgid "Today"
+msgstr ""
+
+msgctxt "#30026"
+msgid "Widevine or InputStream Adaptive is unavailable on this device."
+msgstr ""
+
+msgctxt "#30027"
+msgid "Your session expired or access was refused. Sign in again and check your TV subscription."
+msgstr ""
+
+msgctxt "#30028"
+msgid "Session removed from this device."
+msgstr ""
+
+msgctxt "#30030"
+msgid "Diagnostics saved (no credentials or playback URLs):"
+msgstr ""
+
+msgctxt "#30032"
+msgid "Not yet broadcast"
+msgstr ""
+
+msgctxt "#30035"
+msgid "Current programme information is unavailable."
+msgstr ""
+
+msgctxt "#30040"
+msgid "About this addon"
+msgstr ""
+
+msgctxt "#30045"
+msgid "Experimental — Kodi 21.2; PIN is not saved"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Use your TV customer number and PIN, not your Mijn Odido password"
+msgstr ""
+
+msgctxt "#30047"
+msgid "Device name"
+msgstr ""
+
+msgctxt "#30048"
+msgid "Device name is sent at the next sign-in"
+msgstr ""
+
+msgctxt "#30049"
+msgid "Odido refused registration because of its device limit. Manage your registered devices in the official Odido service, then retry. Naming this device does not free a slot; this addon keeps the same device ID."
+msgstr ""
+
+msgctxt "#30050"
+msgid "Restart Kodi completely to start the updated playback service, then try the channel again."
+msgstr ""
+
+msgctxt "#30051"
+msgid "Last playback error"
+msgstr ""

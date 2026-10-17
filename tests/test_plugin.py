@@ -1,0 +1,215 @@
+"""Kodi API doubles for navigation, playback and heartbeat ownership."""
+import importlib.util
+from pathlib import Path
+import sys
+import tempfile
+import types
+import unittest
+from unittest.mock import Mock, patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'plugin.video.odidotv'))
+
+
+def channel():
+    return {'kind': 'channel', 'id': '18', 'channel': '', 'title': 'Channel', 'plot': '', 'image': '', 'start': 0, 'end': 0, 'duration': 0}
+
+
+class PluginTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.items = []
+        self.kodi, self.gui, self.kplugin = Mock(), Mock(), Mock()
+        self.gui.ListItem.side_effect = self.new_item
+        addon = Mock()
+        addon.getSetting.return_value = 'Kodi Living Room'
+        addon.getAddonInfo.side_effect = lambda key: self.directory.name if key == 'profile' else '0.1.0'
+        addon.getLocalizedString.side_effect = str
+        self.helper = Mock()
+        modules = {'xbmc': self.kodi, 'xbmcgui': self.gui, 'xbmcplugin': self.kplugin,
+                   'xbmcaddon': types.SimpleNamespace(Addon=lambda: addon),
+                   'xbmcvfs': types.SimpleNamespace(translatePath=lambda p: p), 'inputstreamhelper': self.helper}
+        self.patcher = patch.dict(sys.modules, modules)
+        self.patcher.start()
+        self.addCleanup(self.patcher.stop)
+        sys.modules.pop('resources.lib.plugin', None)
+        from resources.lib.plugin import Plugin
+        self.Plugin = Plugin
+        self.registration = patch('resources.lib.plugin.register_playback', return_value={
+            'url': 'http://127.0.0.1:12345/secret/session/manifest.mpd',
+            'license': 'http://127.0.0.1:12345/secret/session/license'})
+        self.register = self.registration.start()
+        self.addCleanup(self.registration.stop)
+
+    def new_item(self, **kwargs):
+        item = Mock()
+        item.kwargs = kwargs
+        self.items.append(item)
+        return item
+
+    def plugin(self, query):
+        plugin = self.Plugin(['plugin://plugin.video.odidotv/', '1', query])
+        plugin.client = Mock()
+        plugin.client.logged_in = True
+        return plugin
+
+    def test_live_is_playable_not_folder(self):
+        plugin = self.plugin('?action=live')
+        plugin.client.channels.return_value = [channel()]
+        plugin.client.live_programmes.return_value = ([], [])
+        plugin.dispatch()
+        self.assertFalse(self.kplugin.addDirectoryItem.call_args.kwargs['isFolder'])
+        self.items[0].setProperty.assert_any_call('IsPlayable', 'true')
+
+    def test_login_pin_masked_and_preserved(self):
+        plugin = self.plugin('?action=login')
+        plugin.dialog.input.side_effect = ['customer', '0012']
+        plugin.dispatch()
+        plugin.client.login.assert_called_once_with('customer', '0012')
+        self.assertEqual(plugin.dialog.input.call_args.kwargs['option'], self.gui.ALPHANUM_HIDE_INPUT)
+
+    def test_guide_failure_reports_code_and_keeps_channels_playable(self):
+        from resources.lib.api import OdidoError
+        plugin = self.plugin('?action=live')
+        plugin.client.channels.return_value = [channel()]
+        plugin.client.live_programmes.side_effect = OdidoError('API_146020013_GUIDE')
+        plugin.dispatch()
+        self.assertIn('API_146020013_GUIDE', self.gui.Dialog.return_value.notification.call_args.args[1])
+        self.gui.Window.return_value.setProperty.assert_called_with(
+            'plugin.video.odidotv.last_guide_error', 'API_146020013_GUIDE')
+        self.kplugin.addDirectoryItem.assert_called_once()
+
+    def test_live_partial_information_still_displays_successful_programmes(self):
+        plugin = self.plugin('?action=live')
+        plugin.client.channels.return_value = [channel()]
+        plugin.client.live_programmes.return_value = ([{
+            'channel': '18', 'title': 'Current programme', 'plot': 'Programme synopsis'}], ['API_123_GUIDE'])
+        plugin.dispatch()
+        self.assertEqual(self.items[0].kwargs['label'], 'Channel — Current programme')
+        self.items[0].getVideoInfoTag.return_value.setPlot.assert_called_with('Programme synopsis')
+        self.kplugin.addDirectoryItem.assert_called_once()
+
+    def test_live_successful_fallback_clears_warning(self):
+        plugin = self.plugin('?action=live')
+        plugin.client.channels.return_value = [channel()]
+        plugin.client.live_programmes.return_value = ([{
+            'channel': '18', 'title': 'Current programme', 'plot': ''}], [])
+        plugin.dispatch()
+        plugin.dialog.notification.assert_not_called()
+        self.gui.Window.return_value.clearProperty.assert_called_with('plugin.video.odidotv.last_guide_error')
+
+    def test_device_limit_has_specific_guidance_without_retry(self):
+        from resources.lib import plugin as module
+        from resources.lib.api import OdidoError
+        plugin = self.plugin('?action=login')
+        plugin.dispatch = Mock(side_effect=OdidoError('DEVICE_LIMIT'))
+        with patch.object(module, 'Plugin', return_value=plugin):
+            module.run()
+        plugin.dispatch.assert_called_once()
+        self.assertEqual(plugin.dialog.ok.call_args.args[1], '30049\nDEVICE_LIMIT')
+
+    def test_cancel_login_marks_playback_failed(self):
+        plugin = self.plugin('?action=play&kind=channel&id=18')
+        plugin.client.logged_in = False
+        plugin.dialog.input.return_value = ''
+        plugin.dispatch()
+        plugin.client.stream.assert_not_called()
+        self.assertFalse(self.kplugin.setResolvedUrl.call_args.args[1])
+
+    def test_widevine_headers_passed_only_to_license(self):
+        plugin = self.plugin('?action=play&kind=program&id=77&channel=18')
+        plugin.client.stream.return_value = {'url': 'https://cdn.example/a.mpd?sig=x%2By',
+                                             'license': 'https://tv.odido.nl/license', 'custom_data': 'opaque'}
+        plugin.client.media_headers.side_effect = [{'User-Agent': 'test'}, {'AcquireLicense.CustomData': 'opaque'}]
+        plugin.dispatch()
+        plugin.client.stream.assert_called_once_with('program', '77', '18')
+        self.kplugin.setResolvedUrl.assert_called_once()
+        item = self.kplugin.setResolvedUrl.call_args.args[2]
+        self.assertEqual(item.kwargs['path'], 'http://127.0.0.1:12345/secret/session/manifest.mpd')
+        props = dict(call.args for call in item.setProperty.call_args_list)
+        self.assertIn('/session/license|Content-Type=', props['inputstream.adaptive.license_key'])
+        self.assertNotIn('opaque', str(props))
+        self.assertNotIn('sig=x%2By', str(props))
+        self.assertEqual(self.register.call_args.args[1]['custom_data'], 'opaque')
+        plugin.client.media_headers.assert_not_called()
+        self.assertTrue(props['inputstream.adaptive.license_key'].endswith('|R{SSM}|'))
+
+    def test_clear_stream_does_not_require_widevine(self):
+        plugin = self.plugin('?action=play&kind=channel&id=18')
+        plugin.client.stream.return_value = {'url': 'https://cdn.example/clear.mpd', 'license': '', 'custom_data': ''}
+        plugin.client.media_headers.return_value = {}
+        plugin.dispatch()
+        self.helper.Helper.assert_not_called()
+        self.assertTrue(self.kplugin.setResolvedUrl.call_args.args[1])
+
+    def test_widevine_unavailable_reports_failure(self):
+        plugin = self.plugin('?action=play&kind=channel&id=18')
+        plugin.client.stream.return_value = {'url': 'https://cdn.example/a.mpd', 'license': 'https://tv.odido.nl/license', 'custom_data': ''}
+        self.helper.Helper.return_value.check_inputstream.return_value = False
+        plugin.dispatch()
+        self.assertFalse(self.kplugin.setResolvedUrl.call_args.args[1])
+
+    def test_future_program_not_playable(self):
+        plugin = self.plugin('?action=guide&channel=18&day=20261017')
+        plugin.client.day.return_value = [dict(channel(), kind='program', start=9999999999999)]
+        plugin.dispatch()
+        self.items[0].setProperty.assert_any_call('IsPlayable', 'false')
+
+    def test_replay_channel_and_day_navigation_preserves_channel_id(self):
+        from urllib.parse import parse_qs, urlparse
+        plugin = self.plugin('?action=replay')
+        plugin.client.channels.return_value = [dict(channel(), id='141430714')]
+        plugin.dispatch()
+        query = parse_qs(urlparse(self.kplugin.addDirectoryItem.call_args.args[1]).query)
+        self.assertEqual(query, {'action': ['days'], 'channel': ['141430714']})
+        plugin = self.plugin('?action=days&channel=141430714')
+        self.kplugin.addDirectoryItem.reset_mock()
+        plugin.dispatch()
+        calls = self.kplugin.addDirectoryItem.call_args_list
+        self.assertEqual(len(calls), 7)
+        for call in calls:
+            query = parse_qs(urlparse(call.args[1]).query)
+            self.assertEqual(query['action'], ['guide'])
+            self.assertEqual(query['channel'], ['141430714'])
+            self.assertEqual(len(query['day'][0]), 8)
+
+    def test_replay_error_is_available_in_diagnostics(self):
+        from resources.lib import plugin as module
+        from resources.lib.api import OdidoError
+        plugin = self.plugin('?action=guide&channel=18&day=20260606')
+        plugin.dispatch = Mock(side_effect=OdidoError('API_123_GUIDE'))
+        with patch.object(module, 'Plugin', return_value=plugin):
+            module.run()
+        self.gui.Window.return_value.setProperty.assert_called_with(
+            'plugin.video.odidotv.last_guide_error', 'API_123_GUIDE')
+
+    def test_internal_guide_error_reports_location_without_private_message(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=guide&channel=18&day=20260606')
+        plugin.client.day.side_effect = TypeError('private response or URL')
+        with patch.object(module, 'Plugin', return_value=plugin):
+            module.run()
+        message = plugin.dialog.ok.call_args.args[1]
+        self.assertRegex(message, r'^30052\nTypeError_PLUGIN_L\d+$')
+        self.assertNotIn('private', message)
+        self.assertFalse(self.kplugin.endOfDirectory.call_args.kwargs['succeeded'])
+
+    def test_channel_search_is_case_insensitive(self):
+        plugin = self.plugin('?action=search')
+        plugin.client.channels.return_value = [channel()]
+        plugin.dialog.input.return_value = 'CHANNEL'
+        plugin.dispatch()
+        self.kplugin.addDirectoryItem.assert_called_once()
+
+    def test_heartbeat_ownership_excludes_other_video(self):
+        spec = importlib.util.spec_from_file_location('odido_service', ROOT / 'plugin.video.odidotv/service.py')
+        service = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(service)
+        self.assertTrue(service.is_our_playback(True, 'https://cdn.example/a.mpd', 'https://cdn.example/a.mpd'))
+        self.assertFalse(service.is_our_playback(True, 'https://other.example/b.mpd', 'https://cdn.example/a.mpd'))
+        self.assertFalse(service.is_our_playback(False, '', 'https://cdn.example/a.mpd'))
+
+
+if __name__ == '__main__':
+    unittest.main()
