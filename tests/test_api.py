@@ -79,14 +79,42 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(migrated.device_name, 'Kodi Odido TV')
         self.assertEqual(migrated.state['device_id'], state['device_id'])
 
-    def test_credentials_not_persisted(self):
+    def test_successful_credentials_saved_with_private_permissions(self):
         self.signed_in()
-        for path in Path(self.directory.name).iterdir():
-            text = path.read_text()
-            self.assertNotIn('synthetic-user', text)
-            # The PIN may coincidentally appear in a random device ID, so check keys.
-            self.assertNotIn('clientPasswd', text)
-            self.assertNotIn('userID', text)
+        again = Client(self.directory.name, self.transport)
+        self.assertEqual(again.state['credentials'], {'username': 'synthetic-user', 'pin': '0012'})
+        self.assertEqual(Path(self.client.state_path).stat().st_mode & 0o777, 0o600)
+        self.assertEqual(Path(self.client.cookie_path).stat().st_mode & 0o777, 0o600)
+
+    def test_missing_cookies_reauthenticates_with_saved_login_and_same_device(self):
+        self.signed_in()
+        device = self.client.state['device_id']
+        Path(self.client.cookie_path).unlink()
+        self.transport.return_value = ok(csrfToken='renewed')
+        again = Client(self.directory.name, self.transport)
+        self.assertFalse(again.logged_in)
+        again.require_session()
+        payload = self.transport.call_args.args[1]
+        self.assertEqual(payload['authenticateBasic']['clientPasswd'], '0012')
+        self.assertEqual(payload['authenticateDevice']['physicalDeviceID'], device)
+        self.assertTrue(Client(self.directory.name).logged_in)
+
+    def test_failed_first_login_does_not_save_credentials(self):
+        self.transport.return_value = {'result': {'retCode': '123456'}}
+        with self.assertRaises(OdidoError):
+            self.client.login('wrong', 'bad')
+        self.assertNotIn('credentials', Client(self.directory.name).state)
+
+    def test_signed_out_profile_cannot_automatically_log_in(self):
+        self.signed_in()
+        background = Client(self.directory.name, self.transport)
+        self.client.logout()
+        self.assertNotIn('credentials', Client(self.directory.name).state)
+        with self.assertRaisesRegex(AuthError, 'LOGIN_REQUIRED'):
+            Client(self.directory.name, self.transport).require_session()
+        with self.assertRaisesRegex(AuthError, 'SESSION_CHANGED'):
+            background.login('synthetic-user', '0012')
+        self.transport.assert_not_called()
 
     def test_device_id_and_session_survive_restart(self):
         self.signed_in()
@@ -134,10 +162,53 @@ class ClientTests(unittest.TestCase):
 
     def test_heartbeat_provider_rejection_expires_session(self):
         self.signed_in()
+        self.client.state.pop('credentials')  # Legacy session without saved login.
         self.transport.return_value = {'result': {'retCode': '123456'}}
         with self.assertRaisesRegex(AuthError, 'SESSION_REJECTED'):
             self.client.heartbeat()
         self.assertFalse(self.client.logged_in)
+
+    def test_expired_heartbeat_renews_once_and_preserves_device(self):
+        for rejection in (AuthError('HTTP_401'), {'result': {'retCode': '123456'}}):
+            with self.subTest(rejection=rejection):
+                self.signed_in()
+                device = self.client.state['device_id']
+                self.transport.side_effect = [rejection, ok(csrfToken='renewed'), ok()]
+                self.client.heartbeat()
+                self.assertEqual([c.args[0] for c in self.transport.call_args_list],
+                                 ['OnLineHeartbeat', 'Authenticate', 'OnLineHeartbeat'])
+                self.assertTrue(self.client.logged_in)
+                self.assertEqual(self.client.state['device_id'], device)
+                self.transport.side_effect = None
+
+    def test_rejected_renewed_session_stops_without_retry_loop(self):
+        self.signed_in()
+        self.transport.side_effect = [AuthError('HTTP_401'), ok(csrfToken='new'), AuthError('HTTP_401')]
+        with self.assertRaisesRegex(AuthError, 'HTTP_401'):
+            self.client.heartbeat()
+        self.assertEqual(self.transport.call_count, 3)
+        self.assertFalse(self.client.logged_in)
+
+    def test_failed_renewal_keeps_saved_login_for_network_retry(self):
+        self.signed_in()
+        self.transport.side_effect = [AuthError('HTTP_401'), OdidoError('NETWORK_ERROR')]
+        with self.assertRaisesRegex(OdidoError, 'NETWORK_ERROR'):
+            self.client.heartbeat()
+        self.assertEqual(Client(self.directory.name).state['credentials']['pin'], '0012')
+
+    def test_sign_out_during_heartbeat_never_reauthenticates(self):
+        self.signed_in()
+        background = Client(self.directory.name, self.transport)
+        def sign_out(*args):
+            self.client.logout()
+            return ok(csrfToken='late-response')
+        self.transport.side_effect = sign_out
+        with self.assertRaisesRegex(AuthError, 'SESSION_CHANGED'):
+            background.heartbeat()
+        self.assertEqual(self.transport.call_count, 1)
+        restarted = Client(self.directory.name)
+        self.assertFalse(restarted.logged_in)
+        self.assertNotIn('credentials', restarted.state)
 
     def test_network_failure_keeps_session_for_retry(self):
         self.signed_in()

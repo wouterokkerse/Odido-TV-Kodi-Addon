@@ -43,9 +43,15 @@ Protected playback may prompt InputStream Helper to install Widevine.
 Sign in using your **TV customer number and TV PIN**, found in Mijn Odido or the
 Odido app. The PIN is not your Mijn Odido password. Official guidance:
 [Odido TV login details](https://www.odido.nl/service/producten/tv/gebruiken/inloggegevens-tv).
-The addon does not save the PIN or customer number. It saves scoped cookies and
-the CSRF session token in its Kodi profile. Sign-out clears that local session;
-it does not unregister the device on Odido's servers.
+After a successful sign-in, the addon remembers your customer number and TV PIN
+alongside its cookies and CSRF session token in its local Kodi profile. It reuses
+the session after a restart and signs in again automatically when the session
+expires, keeping the same device ID. Existing users must sign in once to save
+their details. The credentials are stored unencrypted in `session.json` with
+owner-only file permissions where supported; keep your Kodi profile private.
+**Sign out** removes the saved credentials and session from this device;
+it does not unregister the device on Odido's servers. Saved credentials are
+excluded from exported diagnostics.
 
 **Device name** remains configurable, defaulting to Kodi Odido TV. The login
 request sends it as `authenticateDevice.deviceName`. Changing the name does not

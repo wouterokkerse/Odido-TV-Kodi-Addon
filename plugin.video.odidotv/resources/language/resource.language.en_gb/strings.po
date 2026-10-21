@@ -243,7 +243,7 @@ msgid "Your session expired or access was refused. Sign in again and check your 
 msgstr ""
 
 msgctxt "#30028"
-msgid "Session removed from this device."
+msgid "Saved login and session removed from this device."
 msgstr ""
 
 msgctxt "#30030"
@@ -263,7 +263,7 @@ msgid "About this addon"
 msgstr ""
 
 msgctxt "#30045"
-msgid "Experimental — Kodi 21.2; PIN is not saved"
+msgid "Login is saved locally. Sign out to forget it."
 msgstr ""
 
 msgctxt "#30046"

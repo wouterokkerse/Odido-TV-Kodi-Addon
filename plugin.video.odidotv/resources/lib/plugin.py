@@ -118,7 +118,10 @@ class Plugin:
             self.entry(self.tr(key), key)
         for key in ('favorites', 'later'):
             self.entry(self.tr(key), 'saved', list=key)
-        for key in (('logout',) if self.client.logged_in else ('login',)) + ('settings', 'diagnostics'):
+        account_actions = ('logout',) if self.client.logged_in else ('login',)
+        if not self.client.logged_in and self.client.state.get('credentials'):
+            account_actions += ('logout',)
+        for key in account_actions + ('settings', 'diagnostics'):
             self.entry(self.tr(key), key, folder=False)
         self.finish()
 
@@ -137,6 +140,12 @@ class Plugin:
     def require_login(self):
         if self.client.logged_in:
             return True
+        try:
+            self.client.require_session()
+            return True
+        except AuthError as error:
+            if str(error) != 'LOGIN_REQUIRED':
+                raise
         self.dialog.ok('Odido TV', self.tr('login_needed'))
         return self.login()
 
