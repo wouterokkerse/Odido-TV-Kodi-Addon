@@ -256,12 +256,42 @@ class PluginTests(unittest.TestCase):
         self.assertEqual(plugin.dialog.ok.call_args.args[1], '30049\nDEVICE_LIMIT')
 
     def test_cancel_login_marks_playback_failed(self):
+        from resources.lib.api import AuthError
         plugin = self.plugin('?action=play&kind=channel&id=18')
         plugin.client.logged_in = False
+        plugin.client.require_session.side_effect = AuthError('LOGIN_REQUIRED')
         plugin.dialog.input.return_value = ''
         plugin.dispatch()
         plugin.client.stream.assert_not_called()
         self.assertFalse(self.kplugin.setResolvedUrl.call_args.args[1])
+
+    def test_saved_login_avoids_customer_number_and_pin_dialogs(self):
+        plugin = self.plugin('?action=live')
+        plugin.client.logged_in = False
+        self.assertTrue(plugin.require_login())
+        plugin.client.require_session.assert_called_once()
+        plugin.dialog.input.assert_not_called()
+        plugin.dialog.ok.assert_not_called()
+
+    def test_expired_session_still_offers_sign_out_to_forget_login(self):
+        plugin = self.plugin('?action=root')
+        plugin.client.logged_in = False
+        plugin.client.state = {'credentials': {'username': 'customer', 'pin': '0012'}}
+        plugin.dispatch()
+        urls = [call.args[1] for call in self.kplugin.addDirectoryItem.call_args_list]
+        self.assertTrue(any('action=login' in url for url in urls))
+        self.assertTrue(any('action=logout' in url for url in urls))
+
+    def test_diagnostics_exclude_saved_credentials(self):
+        plugin = self.plugin('?action=diagnostics')
+        plugin.client.state = {'credentials': {'username': 'private-user', 'pin': '0012'}}
+        self.kodi.getInfoLabel.return_value = '21.2'
+        self.gui.Window.return_value.getProperty.return_value = ''
+        plugin.dispatch()
+        text = (Path(plugin.profile) / 'diagnostics.json').read_text()
+        self.assertNotIn('credentials', text)
+        self.assertNotIn('private-user', text)
+        self.assertNotIn('0012', text)
 
     def test_widevine_headers_passed_only_to_license(self):
         plugin = self.plugin('?action=play&kind=program&id=77&channel=18')

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.5
+
+* Remember the TV customer number and PIN locally after successful sign-in.
+* Renew expired sessions once using saved credentials and the existing device ID.
+* Sign-out removes saved credentials; network failures preserve them for retry.
+* Keep credentials out of diagnostics and document local unencrypted storage.
+
 ## 0.2.4
 
 * Address the actual native TV OSD start button, rather than only stream startup.

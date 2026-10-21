@@ -243,8 +243,8 @@ msgid "Your session expired or access was refused. Sign in again and check your 
 msgstr "Je sessie is verlopen of toegang is geweigerd. Log opnieuw in en controleer je TV-abonnement."
 
 msgctxt "#30028"
-msgid "Session removed from this device."
-msgstr "Sessie verwijderd van dit apparaat."
+msgid "Saved login and session removed from this device."
+msgstr "Opgeslagen inloggegevens en sessie verwijderd van dit apparaat."
 
 msgctxt "#30030"
 msgid "Diagnostics saved (no credentials or playback URLs):"
@@ -263,8 +263,8 @@ msgid "About this addon"
 msgstr "Over deze addon"
 
 msgctxt "#30045"
-msgid "Experimental — Kodi 21.2; PIN is not saved"
-msgstr "Experimenteel — Kodi 21.2; pincode wordt niet opgeslagen"
+msgid "Login is saved locally. Sign out to forget it."
+msgstr "Inloggegevens worden lokaal opgeslagen. Log uit om ze te verwijderen."
 
 msgctxt "#30046"
 msgid "Use your TV customer number and PIN, not your Mijn Odido password"

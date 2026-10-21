@@ -140,8 +140,10 @@ class Client:
         self.jar.save(ignore_discard=True)
         os.chmod(self.cookie_path, 0o600)
 
-    def logout(self):
+    def logout(self, forget_credentials=True):
         # Local sign-out. Device registration remains managed by Odido.
+        if forget_credentials:
+            self.state.pop('credentials', None)
         self.jar.clear()
         self.state.update(logged_in=False, csrf_token='', generation=secrets.token_hex(16))
         self._save()
@@ -193,14 +195,14 @@ class Client:
                 self._save()
             return value
         except AuthError:
-            self.logout()
+            self.logout(forget_credentials=False)
             raise
 
     def login(self, username, pin):
         # Persist the label even if registration fails. Changing the label must
         # never generate another identity or consume another registration slot.
         self.state['device_name'] = self.device_name
-        self.logout()
+        self.logout(forget_credentials=False)
         device = self.state['device_id']
         payload = {
             'authenticateBasic': {
@@ -221,22 +223,41 @@ class Client:
             if not value.get('csrfToken'):
                 raise OdidoError('NO_CSRF_TOKEN')
             self.state.update(logged_in=True, csrf_token=value['csrfToken'])
+            # Only remember credentials after successful authentication. The
+            # atomic profile store creates files with owner-only permissions.
+            self.state['credentials'] = {'username': username, 'pin': pin}
             self._save()
         except OdidoError:
-            self.logout()
+            self.logout(forget_credentials=False)
             raise
 
     def require_session(self):
         if not self.logged_in:
-            raise AuthError('LOGIN_REQUIRED')
+            credentials = self.state.get('credentials')
+            if not isinstance(credentials, dict) or not all(
+                    isinstance(credentials.get(key), str) and credentials[key]
+                    for key in ('username', 'pin')):
+                raise AuthError('LOGIN_REQUIRED')
+            self.login(credentials['username'], credentials['pin'])
 
     def heartbeat(self):
         self.require_session()
         try:
+            return self._heartbeat()
+        except AuthError as error:
+            # A provider-expired session can be renewed once, without another
+            # prompt. Never retry SESSION_CHANGED after a foreground sign-out.
+            if str(error) == 'SESSION_CHANGED' or self.logged_in or not self.state.get('credentials'):
+                raise
+            self.require_session()
+            return self._heartbeat()
+
+    def _heartbeat(self):
+        try:
             return self.request('OnLineHeartbeat', params={'from': 'inMSAAccess'})
         except OdidoError as error:
             if str(error).startswith('API_'):
-                self.logout()
+                self.logout(forget_credentials=False)
                 raise AuthError('SESSION_REJECTED') from None
             # A network failure must not discard a potentially valid session.
             raise
