@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addon id="plugin.video.odidotv" name="Odido TV (unofficial)" version="0.2.7" provider-name="Community">
+<addon id="plugin.video.odidotv" name="Odido TV (unofficial)" version="0.2.8" provider-name="Community">
   <requires>
     <import addon="xbmc.python" version="3.0.1" />
     <import addon="inputstream.adaptive" version="20.3.0" />
