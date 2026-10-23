@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<addon id="plugin.video.odidotv" name="Odido TV (unofficial)" version="0.2.7" provider-name="Community">
+  <requires>
+    <import addon="xbmc.python" version="3.0.1" />
+    <import addon="inputstream.adaptive" version="20.3.0" />
+    <import addon="script.module.inputstreamhelper" version="0.6.0" />
+    <import addon="service.iptv.manager" version="0.2.3" optional="true" />
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.service" library="service.py" />
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Unofficial Odido TV client — experimental</summary>
+    <summary lang="nl_NL">Onofficiële Odido TV-client — experimenteel</summary>
+    <description lang="en_GB">Live TV, replay, channel search and local saved lists for Kodi 21.2. Odido TV subscription required. Login and playback need subscriber validation.</description>
+    <description lang="nl_NL">Live tv, terugkijken, zenders zoeken en lokale lijsten voor Kodi 21.2. Odido TV-abonnement vereist. Inloggen en afspelen moeten met een abonnement worden getest.</description>
+    <platform>all</platform><license>GPL-3.0-or-later</license>
+    <assets><icon>icon.png</icon></assets>
+  </extension>
+</addon>
