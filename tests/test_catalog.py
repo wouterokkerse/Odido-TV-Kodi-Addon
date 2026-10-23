@@ -41,6 +41,12 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(load_channels(self.profile, fetch=Mock(side_effect=URLError('offline'))),
                          validate(self.feed))
 
+    def test_explicit_channel_refresh_bypasses_daily_cache(self):
+        fetch = Mock(return_value=self.feed)
+        load_channels(self.profile, fetch=fetch)
+        load_channels(self.profile, fetch=fetch, force=True)
+        self.assertEqual(fetch.call_count, 2)
+
     def test_invalid_refresh_retains_last_good_mapping(self):
         write_json(Path(self.profile)/'channel_catalog.json', {'updated': 0, 'channels': self.feed})
         self.assertEqual(load_channels(self.profile, fetch=lambda: {'not': 'a catalogue'}),

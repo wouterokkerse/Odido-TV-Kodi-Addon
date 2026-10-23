@@ -57,10 +57,21 @@ class GuideRefreshTests(unittest.TestCase):
     def test_failed_import_retries_only_after_fifteen_minutes(self):
         self.status('sent', error='NETWORK_ERROR')
         self.advance(60)
+        # An actual EPG callback finishes/removes its scoped request, even on
+        # failure; until then a queued import must not be overwritten.
+        from resources.lib.refresh import complete, pending
+        complete(str(self.profile), pending(str(self.profile), self.now))
         self.advance(899)
         self.assertEqual(self.manager.setSetting.call_count, 1)
         self.advance(1)
         self.assertEqual(self.manager.setSetting.call_count, 2)
+
+    def test_reused_old_guide_does_not_count_as_new_fetch(self):
+        write_json(str(self.profile / 'iptv_export_epg.json'),
+                   {'phase': 'sent', 'updated': self.now, 'fetched': self.now - 7200,
+                    'reused': True, 'error': ''})
+        self.advance(60)
+        self.manager.setSetting.assert_called_once()
 
     def test_disabled_integration_or_auto_refresh_does_not_request_import(self):
         for setting in ('iptv.enabled', 'iptv.auto_refresh'):

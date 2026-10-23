@@ -3,6 +3,7 @@ import os
 import time
 
 from .storage import read_json
+from .refresh import pending, request
 
 MANAGER = 'service.iptv.manager'
 INTERVAL = 3600
@@ -33,6 +34,8 @@ class GuideRefresh:
                 (state.get('logged_in') and state.get('csrf_token')) or state.get('credentials')):
             return
         now = self.clock()
+        if pending(self.profile, now):
+            return
         for kind in ('channels', 'epg'):
             status = read_json(os.path.join(self.profile, 'iptv_export_' + kind + '.json'), {})
             if not isinstance(status, dict):
@@ -42,8 +45,10 @@ class GuideRefresh:
             # Do not overlap a manual import or Manager's own scheduled import.
             if status.get('phase') in ('started', 'ready') and 0 <= age < BUSY_TIMEOUT:
                 return
+            fetched = status.get('fetched', stamp)
             if (kind == 'epg' and status.get('phase') == 'sent' and
-                    not status.get('error') and 0 <= age < INTERVAL):
+                    not status.get('error') and isinstance(fetched, (int, float)) and
+                    0 <= now - fetched < INTERVAL):
                 return
         # Use Manager's silent service path. Its refresh script opens settings
         # and progress dialogs. The service checks this timestamp every 30s,
@@ -51,4 +56,4 @@ class GuideRefresh:
         # Preserve the user's Manager interval and all other source settings.
         self.next_check = now_mono + RETRY
         manager = self.get_addon(MANAGER)
-        manager.setSetting('last_refreshed', '0')
+        request(self.profile, manager, now=now)

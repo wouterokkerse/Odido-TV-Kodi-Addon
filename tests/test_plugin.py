@@ -129,6 +129,85 @@ class PluginTests(unittest.TestCase):
         plugin.client.channel_rows.assert_not_called()
         plugin.dialog.input.assert_not_called()
 
+    def test_channels_only_reuses_guide_without_guide_requests(self):
+        import time
+        from resources.lib import plugin as module
+        from resources.lib.refresh import request, payload_path, pending
+        from resources.lib.storage import write_json, read_json
+        guide = {'version': 1, 'epg': {'odido.18': [{'title': 'Saved programme'}]}}
+        path = payload_path(self.directory.name, 'epg')
+        write_json(path, {'payload': guide, 'updated': int(time.time()) - 7200, 'error': ''})
+        original = Path(path).read_bytes()
+        request(self.directory.name, self.manager_addon, mode='channels', force=True)
+        channels = self.plugin('?action=iptv_channels&port=23456')
+        epg = self.plugin('?action=iptv_epg&port=23456')
+        for plugin in (channels, epg):
+            plugin.addon.getSetting.side_effect = lambda key: {'iptv.enabled': 'true'}.get(key, '')
+        def send(port, kind, producer, report):
+            return producer()
+        with patch.object(module, 'send_iptv', side_effect=send), patch.object(module, 'Exporter') as exporter:
+            exporter.return_value.channels.return_value = {'version': 1, 'streams': []}
+            channels.dispatch()
+            epg.dispatch()
+            self.assertEqual(exporter.call_count, 1)
+            self.assertTrue(exporter.call_args.kwargs['refresh_channels'])
+            exporter.return_value.epg.assert_not_called()
+        epg.client.heartbeat.assert_not_called()
+        epg.client.epg.assert_not_called()
+        self.assertEqual(Path(path).read_bytes(), original)
+        self.assertEqual(pending(self.directory.name), {})
+        self.assertTrue(read_json(Path(self.directory.name)/'iptv_export_epg.json')['reused'])
+        epg.dialog.ok.assert_not_called()
+
+    def test_guide_only_reuses_channels_and_forces_guide_fetch(self):
+        import time
+        from resources.lib import plugin as module
+        from resources.lib.refresh import request, payload_path
+        from resources.lib.storage import write_json
+        path = payload_path(self.directory.name, 'channels')
+        payload = {'version': 1, 'streams': [{'id': 'odido.18', 'name': 'Saved channel'}]}
+        write_json(path, {'payload': payload, 'updated': int(time.time()) - 300, 'error': ''})
+        original = Path(path).read_bytes()
+        request(self.directory.name, self.manager_addon, mode='epg', force=True)
+        channels = self.plugin('?action=iptv_channels&port=23456')
+        epg = self.plugin('?action=iptv_epg&port=23456')
+        for plugin in (channels, epg):
+            plugin.addon.getSetting.side_effect = lambda key: {'iptv.enabled': 'true', 'iptv.days': '7'}.get(key, '')
+        def send(port, kind, producer, report):
+            return producer()
+        with patch.object(module, 'send_iptv', side_effect=send), patch.object(module, 'Exporter') as exporter:
+            exporter.return_value.epg.return_value = {'version': 1, 'epg': {}}
+            exporter.return_value.errors = []
+            channels.dispatch()
+            exporter.assert_not_called()
+            epg.dispatch()
+            exporter.return_value.epg.assert_called_once_with(7, force=True)
+            exporter.return_value.channels.assert_not_called()
+        channels.client.channel_rows.assert_not_called()
+        channels.client.heartbeat.assert_not_called()
+        self.assertEqual(Path(path).read_bytes(), original)
+        channels.dialog.ok.assert_not_called()
+
+    def test_split_button_explains_missing_baseline_without_scheduling(self):
+        plugin = self.plugin('?action=iptv_refresh_channels')
+        self.kodi.getCondVisibility.return_value = True
+        plugin.dispatch()
+        plugin.dialog.ok.assert_called_once_with('Odido TV', '30104')
+        self.manager_addon.setSetting.assert_not_called()
+
+    def test_manual_guide_action_queues_correct_scope(self):
+        import time
+        from resources.lib.refresh import payload_path, pending
+        from resources.lib.storage import write_json
+        write_json(payload_path(self.directory.name, 'channels'),
+                   {'payload': {'version': 1, 'streams': []}, 'updated': int(time.time())})
+        plugin = self.plugin('?action=iptv_refresh_guide')
+        self.kodi.getCondVisibility.return_value = True
+        plugin.dispatch()
+        self.assertEqual(pending(self.directory.name)['mode'], 'epg')
+        self.manager_addon.setSetting.assert_called_once_with('last_refreshed', '0')
+        self.kodi.executebuiltin.assert_not_called()
+
     def test_epg_callback_renews_login_without_opening_dialogs(self):
         from resources.lib import plugin as module
         plugin = self.plugin('?action=iptv_epg&port=23456')
@@ -162,12 +241,13 @@ class PluginTests(unittest.TestCase):
         self.kodi.getCondVisibility.return_value = True
         order = Mock()
         order.attach_mock(plugin.addon.setSetting, 'set')
-        order.attach_mock(self.kodi.executebuiltin, 'run')
+        order.attach_mock(self.manager_addon.setSetting, 'schedule')
         plugin.dispatch()
         self.assertEqual(order.mock_calls, [
             call.set('iptv.channels_uri', 'plugin://plugin.video.odidotv/?action=iptv_channels'),
             call.set('iptv.epg_uri', 'plugin://plugin.video.odidotv/?action=iptv_epg'),
-            call.set('iptv.enabled', 'true'), call.run('RunScript(service.iptv.manager,refresh)')])
+            call.set('iptv.enabled', 'true'), call.schedule('last_refreshed', '0')])
+        self.kodi.executebuiltin.assert_not_called()
 
     def test_disabled_manager_prevents_refresh_and_shows_actionable_message(self):
         plugin = self.plugin('?action=iptv_refresh')
@@ -188,14 +268,16 @@ class PluginTests(unittest.TestCase):
         self.assertEqual(settings['m3uPath'], str(Path(self.directory.name)/'manager/playlist.m3u8'))
         self.assertEqual(settings['epgPath'], str(Path(self.directory.name)/'manager/epg.xml'))
         self.assertEqual(settings['kodi_addon_instance_enabled'], 'true')
-        self.kodi.executebuiltin.assert_called_once_with('RunScript(service.iptv.manager,refresh)')
+        self.manager_addon.setSetting.assert_called_once_with('last_refreshed', '0')
+        self.kodi.executebuiltin.assert_not_called()
 
     def test_explicit_setup_shows_configured_message_and_starts_refresh(self):
         plugin = self.plugin('?action=iptv_setup')
         self.kodi.getCondVisibility.return_value = True
         plugin.dispatch()
         plugin.dialog.ok.assert_called_once_with('Odido TV', '30081')
-        self.kodi.executebuiltin.assert_called_once_with('RunScript(service.iptv.manager,refresh)')
+        self.manager_addon.setSetting.assert_called_once_with('last_refreshed', '0')
+        self.kodi.executebuiltin.assert_not_called()
 
     def test_setup_enables_disabled_pvr_after_saving_instance(self):
         import json

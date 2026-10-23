@@ -3,7 +3,27 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgctxt "#30099"
-msgid "Refresh the Kodi TV guide automatically"
+msgid "Refresh channels and guide automatically"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Refresh guide only"
+msgstr ""
+
+msgctxt "#30102"
+msgid "Refresh channels only"
+msgstr ""
+
+msgctxt "#30103"
+msgid "Refresh queued in the background. Kodi TV will update shortly."
+msgstr ""
+
+msgctxt "#30104"
+msgid "First run the combined channels and guide refresh once. Separate updates then preserve the other saved data."
+msgstr ""
+
+msgctxt "#30105"
+msgid "A refresh is already pending or running. Please let it finish."
 msgstr ""
 
 msgctxt "#30100"

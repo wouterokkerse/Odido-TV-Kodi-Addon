@@ -22,6 +22,8 @@
     <setting type="action" label="30065" action="Addon.OpenSettings(service.iptv.manager)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
     <setting type="action" label="30064" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_setup)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
     <setting type="action" label="30063" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_refresh)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
+    <setting type="action" label="30101" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_refresh_guide)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
+    <setting type="action" label="30102" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_refresh_channels)" option="close" enable="System.HasAddon(service.iptv.manager)"/>
     <setting type="action" label="30071" action="RunPlugin(plugin://plugin.video.odidotv/?action=iptv_status)" option="close"/>
     <setting type="lsep" label="30068"/>
   </category>

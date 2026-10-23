@@ -41,7 +41,7 @@ def download():
     return json.loads(raw.decode('utf-8'))
 
 
-def load_channels(profile, fetch=download):
+def load_channels(profile, fetch=download, force=False):
     path = os.path.join(profile, 'channel_catalog.json')
     cached = read_json(path, {})
     if not isinstance(cached, dict):
@@ -51,7 +51,7 @@ def load_channels(profile, fetch=download):
     except ValueError:
         rows = None
     timestamp = cached.get('updated', 0)
-    if rows and isinstance(timestamp, (int, float)) and 0 <= time.time() - timestamp < 86400:
+    if not force and rows and isinstance(timestamp, (int, float)) and 0 <= time.time() - timestamp < 86400:
         return rows
     try:
         value = fetch()

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.8
+
+* Add separate guide-only and channels-only refresh actions, retaining the
+  other saved export without fetching it again. Prime both exports once after
+  upgrading with a combined or automatic import.
+* Queue manual refreshes through Manager's silent background service, with
+  explicit request scope and guards against overlapping refreshes.
+* Preserve hourly automatic refresh without opening the add-on. A reused guide
+  keeps its original fetch time and cannot mask a due automatic update.
+* Bypass the selected guide/channel cache on explicit manual refreshes.
+
 ## 0.2.7
 
 * Add an installable Odido TV Kodi repository for updates inside Kodi.

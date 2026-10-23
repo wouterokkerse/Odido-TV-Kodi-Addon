@@ -3,7 +3,12 @@ import json
 from pathlib import Path
 
 STRINGS = {
-30099: ('Refresh the Kodi TV guide automatically', 'Kodi TV-gids automatisch verversen'),
+30099: ('Refresh channels and guide automatically', 'Zenders en gids automatisch verversen'),
+30101: ('Refresh guide only', 'Alleen gids vernieuwen'),
+30102: ('Refresh channels only', 'Alleen zenders vernieuwen'),
+30103: ('Refresh queued in the background. Kodi TV will update shortly.', 'Vernieuwen op de achtergrond aangevraagd. Kodi TV wordt binnenkort bijgewerkt.'),
+30104: ('First run the combined channels and guide refresh once. Separate updates then preserve the other saved data.', 'Vernieuw eerst eenmaal zenders en gids samen. Afzonderlijke updates behouden daarna de andere opgeslagen gegevens.'),
+30105: ('A refresh is already pending or running. Please let it finish.', 'Er staat al een vernieuwing klaar of deze is bezig. Laat deze eerst afronden.'),
 30100: ('Refreshes hourly while Kodi is running; no need to open Odido TV.', 'Ververst elk uur zolang Kodi actief is; Odido TV openen is niet nodig.'),
 30093: ('Enable TV start button (Estuary copy)', 'TV-startknop inschakelen (Estuary-kopie)'),
 30094: ('Preparing an Estuary copy with the TV buffer-start button...', 'Estuary-kopie met TV-bufferstartknop voorbereiden...'),

@@ -58,10 +58,11 @@ def programme(row, replay, now):
 
 
 class Exporter:
-    def __init__(self, client, selected=None, clock=time.time, cancelled=lambda: False):
+    def __init__(self, client, selected=None, clock=time.time, cancelled=lambda: False, refresh_channels=False):
         self.client, self.clock, self.cancelled = client, clock, cancelled
         client.require_session()
-        self.rows = [row for row in client.channel_rows() if selected is None or str(row['ID']) in selected]
+        rows = client.channel_rows(refresh=True) if refresh_channels else client.channel_rows()
+        self.rows = [row for row in rows if selected is None or str(row['ID']) in selected]
         self.errors = []
 
     def channels(self):
@@ -101,7 +102,7 @@ class Exporter:
                         raise
             return rows
 
-    def epg(self, days=7):
+    def epg(self, days=7, force=False):
         if days not in (1, 3, 7):
             raise OdidoError('IPTV_INVALID_DAYS')
         now = self.clock()
@@ -134,7 +135,7 @@ class Exporter:
             for identifier in identifiers:
                 entry = cached.get(identifier, {})
                 stamp = entry.get('updated', 0)
-                if not isinstance(stamp, (int, float)) or not 0 <= now - stamp < ttl or not isinstance(entry.get('rows'), list):
+                if force or not isinstance(stamp, (int, float)) or not 0 <= now - stamp < ttl or not isinstance(entry.get('rows'), list):
                     missing.append(identifier)
             for offset in range(0, len(missing), 20):
                 if stop_fetching:

@@ -3,8 +3,28 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgctxt "#30099"
-msgid "Refresh the Kodi TV guide automatically"
-msgstr "Kodi TV-gids automatisch verversen"
+msgid "Refresh channels and guide automatically"
+msgstr "Zenders en gids automatisch verversen"
+
+msgctxt "#30101"
+msgid "Refresh guide only"
+msgstr "Alleen gids vernieuwen"
+
+msgctxt "#30102"
+msgid "Refresh channels only"
+msgstr "Alleen zenders vernieuwen"
+
+msgctxt "#30103"
+msgid "Refresh queued in the background. Kodi TV will update shortly."
+msgstr "Vernieuwen op de achtergrond aangevraagd. Kodi TV wordt binnenkort bijgewerkt."
+
+msgctxt "#30104"
+msgid "First run the combined channels and guide refresh once. Separate updates then preserve the other saved data."
+msgstr "Vernieuw eerst eenmaal zenders en gids samen. Afzonderlijke updates behouden daarna de andere opgeslagen gegevens."
+
+msgctxt "#30105"
+msgid "A refresh is already pending or running. Please let it finish."
+msgstr "Er staat al een vernieuwing klaar of deze is bezig. Laat deze eerst afronden."
 
 msgctxt "#30100"
 msgid "Refreshes hourly while Kodi is running; no need to open Odido TV."

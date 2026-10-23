@@ -20,6 +20,7 @@ from .pvr import configure as configure_pvr
 from .playmode import target as playback_target
 from .tvskin import install as install_tv_skin, SKIN_ID
 from .relay import PROPERTY as RELAY_PROPERTY, RelayError, register_playback
+from .refresh import cached as cached_export, pending as pending_refresh, request as request_refresh, complete as complete_refresh, payload_path
 
 STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
            'later': 30007, 'login': 30008, 'logout': 30009, 'settings': 30010,
@@ -35,7 +36,8 @@ STRINGS = {'live': 30001, 'replay': 30002, 'search': 30005, 'favorites': 30006,
            'yes': 30076, 'no': 30077, 'iptv_error': 30078, 'iptv_manager_missing': 30079,
            'pvr_missing': 30080, 'pvr_configured': 30081, 'pvr_instance': 30082,
            'buffer_start': 30084, 'watch_live': 30087, 'not_started': 30091,
-           'no_replay': 30092, 'skin_preparing': 30094, 'skin_unsupported': 30096}
+           'no_replay': 30092, 'skin_preparing': 30094, 'skin_unsupported': 30096,
+           'refresh_started': 30103, 'refresh_baseline': 30104, 'refresh_busy': 30105}
 PLAYING_PROPERTY = 'plugin.video.odidotv.manifest'
 
 
@@ -218,6 +220,7 @@ class Plugin:
             self.addon.setSetting('iptv.selected', json.dumps([str(rows[index]['ID']) for index in indices]))
 
     def iptv_export(self, kind):
+        refresh = pending_refresh(self.profile)
         status_path = os.path.join(self.profile, 'iptv_export_' + kind + '.json')
         status = {'phase': 'started', 'count': 0, 'error': '', 'updated': int(time.time())}
         def save_status():
@@ -240,6 +243,16 @@ class Plugin:
                 status['phase'] = 'disabled'
                 save_status()
                 return {'version': 1, 'streams': []} if kind == 'channels' else {'version': 1, 'epg': {}}
+            if refresh.get('mode', 'both') not in ('both', kind):
+                saved = cached_export(self.profile, kind)
+                if saved is None:
+                    raise OdidoError('IPTV_REFRESH_BASELINE_REQUIRED')
+                result = saved['payload']
+                count = len(result['streams']) if kind == 'channels' else sum(map(len, result['epg'].values()))
+                status.update(phase='ready', count=count, fetched=saved.get('updated', 0),
+                              reused=True, error=saved.get('error', ''))
+                save_status()
+                return result
             if kind == 'epg':
                 # Validate/renew an expired saved session before guide requests.
                 # Background imports must never open sign-in dialogs.
@@ -250,20 +263,23 @@ class Plugin:
                         raise
                     # A temporary outage must still allow cached EPG export.
             exporter = Exporter(self.client, selection(self.addon.getSetting('iptv.selected')),
-                                cancelled=xbmc.Monitor().abortRequested)
+                                cancelled=xbmc.Monitor().abortRequested,
+                                refresh_channels=kind == 'channels' and refresh.get('force', False))
             if kind == 'channels':
                 result = exporter.channels()
-                status.update(phase='ready', count=len(result['streams']))
+                status.update(phase='ready', count=len(result['streams']), fetched=int(time.time()))
+                write_json(payload_path(self.profile, kind), {'payload': result, 'updated': status['fetched'], 'error': ''})
                 save_status()
                 return result
             try:
                 days = int(self.addon.getSetting('iptv.days') or '7')
             except ValueError:
                 raise OdidoError('IPTV_INVALID_DAYS') from None
-            result = exporter.epg(days)
+            result = exporter.epg(days, force=True) if refresh.get('force') else exporter.epg(days)
             if exporter.errors:
                 report(OdidoError(exporter.errors[0]))
-            status.update(phase='ready', count=sum(map(len, result['epg'].values())))
+            status.update(phase='ready', count=sum(map(len, result['epg'].values())), fetched=int(time.time()))
+            write_json(payload_path(self.profile, kind), {'payload': result, 'updated': status['fetched'], 'error': status['error']})
             save_status()
             return result
 
@@ -276,8 +292,11 @@ class Plugin:
             # Manager runs callbacks in the background, often with handle -1.
             # Never open login/error dialogs or resolve/end a directory here.
             report(error)
+        finally:
+            if kind == 'epg':
+                complete_refresh(self.profile, refresh)
 
-    def iptv_refresh(self, setup=False):
+    def iptv_refresh(self, setup=False, mode='both'):
         if not self.require_login():
             return
         if not xbmc.getCondVisibility('System.AddonIsEnabled(service.iptv.manager)'):
@@ -310,7 +329,14 @@ class Plugin:
         self.addon.setSetting('iptv.channels_uri', 'plugin://plugin.video.odidotv/?action=iptv_channels')
         self.addon.setSetting('iptv.epg_uri', 'plugin://plugin.video.odidotv/?action=iptv_epg')
         self.addon.setSetting('iptv.enabled', 'true')
-        xbmc.executebuiltin('RunScript(service.iptv.manager,refresh)')
+        try:
+            request_refresh(self.profile, manager, mode=mode, force=True)
+        except OdidoError as error:
+            if str(error) in ('IPTV_REFRESH_BASELINE_REQUIRED', 'IPTV_REFRESH_BUSY'):
+                self.dialog.ok('Odido TV', self.tr('refresh_baseline' if str(error) == 'IPTV_REFRESH_BASELINE_REQUIRED' else 'refresh_busy'))
+                return
+            raise
+        self.notify('refresh_started')
 
     def iptv_status(self):
         def yesno(value):
@@ -437,8 +463,8 @@ class Plugin:
         if action == 'iptv_status':
             self.iptv_status()
             return
-        if action == 'iptv_refresh':
-            self.iptv_refresh()
+        if action in ('iptv_refresh', 'iptv_refresh_guide', 'iptv_refresh_channels'):
+            self.iptv_refresh(mode={'iptv_refresh_guide': 'epg', 'iptv_refresh_channels': 'channels'}.get(action, 'both'))
             return
         if action == 'iptv_setup':
             self.iptv_refresh(setup=True)

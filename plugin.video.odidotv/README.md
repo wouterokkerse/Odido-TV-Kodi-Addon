@@ -247,7 +247,7 @@ stops further provider requests on network failure, retains cached data and
 records the safe error code. Expired sessions are renewed using saved login
 details; background refresh never opens credential prompts.
 
-Since 0.2.6, **Refresh the Kodi TV guide automatically** is enabled by default
+Since 0.2.6, automatic refresh is enabled by default
 under **Kodi TV / IPTV Manager**. The Odido service checks after a one-minute
 startup delay and requests a silent Manager import when the last successful
 guide export is at least an hour old or missing. Opening the Odido add-on or
@@ -261,6 +261,28 @@ uses its existing PVR reload behavior, which can defer reload during TV playback
 Its configured refresh interval and other sources' settings are preserved.
 Restart Kodi once after installing this update to load the updated service.
 
+Since 0.2.8, **Refresh channels and guide automatically** updates both in the
+background without opening Odido TV. The same settings page now has three actions:
+
+* **Enable and refresh channels and guide now** updates both.
+* **Refresh guide only** keeps the saved channel list and fetches the guide again.
+* **Refresh channels only** updates the channel list and keeps the saved guide,
+  without making programme-guide requests.
+
+All three actions queue Manager's silent background import, normally picked up
+within 30 seconds, rather than opening Manager's settings/progress window. Kodi
+must be running. After upgrading, run the combined refresh once (or let the
+automatic refresh complete) to save both exports before using the split actions.
+If those exports are missing, the action explains that a combined refresh is
+needed instead of fetching the unrequested data or erasing it. Manual refreshes
+bypass the selected data's normal cache lifetime. A queued or active refresh is
+allowed to finish before another request. Reusing the guide during a channels-only
+refresh does not postpone the next automatic guide refresh.
+
+IPTV Manager still imports all enabled providers and rewrites its combined local
+files; the split applies to Odido's data fetches and exported content. Existing
+PVR reload settings, including deferral during TV playback, remain in effect.
+
 IPTV Manager's callback connection opens **before** loading the catalogue/guide,
 meeting its initial connection timeout. Versioned JSON is sent with a complete
 write and ASCII escapes for Unicode titles, matching the manager's chunk decoder.
@@ -273,7 +295,7 @@ If importing fails, use **Export diagnostics** in Odido TV and inspect
 `IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
 retain their safe stage code. No raw responses or exception messages are logged.
 
-All 194 unit tests pass. A separate compatibility check ran these payloads through
+All 209 unit tests pass. A separate compatibility check ran these payloads through
 IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
 catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
 could not be run in this workspace; they require testing on your Kodi device.

@@ -76,6 +76,14 @@ class ExportTests(unittest.TestCase):
             self.exporter()
         self.client.channel_rows.assert_not_called()
 
+    def test_manual_guide_refresh_bypasses_fresh_guide_cache(self):
+        self.exporter().epg(1)
+        self.client.epg.reset_mock()
+        self.exporter().epg(1)
+        self.client.epg.assert_not_called()
+        self.exporter().epg(1, force=True)
+        self.assertGreater(self.client.epg.call_count, 0)
+
     def test_epg_uses_timezone_aware_dates_and_replay_links_with_same_channel_id(self):
         payload = self.exporter().epg(1)
         row = payload['epg']['odido.18'][0]

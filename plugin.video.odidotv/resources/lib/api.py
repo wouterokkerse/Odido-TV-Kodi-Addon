@@ -262,12 +262,12 @@ class Client:
             # A network failure must not discard a potentially valid session.
             raise
 
-    def channel_rows(self):
+    def channel_rows(self, refresh=False):
         self.require_session()
         # Match the working reference's explicit OTT channel/media pairs.
         # QueryAllChannel was an unverified cross-provider discovery assumption.
         try:
-            return self.catalog_loader(self.profile)
+            return self.catalog_loader(self.profile, force=True) if refresh else self.catalog_loader(self.profile)
         except (OSError, ValueError):
             raise OdidoError('CHANNEL_CATALOG_UNAVAILABLE') from None
 

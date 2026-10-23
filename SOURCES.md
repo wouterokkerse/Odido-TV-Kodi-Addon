@@ -1,5 +1,21 @@
 # Provider and playback references
 
+## 0.2.8 separate background refresh actions
+
+IPTV Manager's paired channel and EPG callbacks have no supported per-kind
+refresh action. Odido now saves each successful export payload and returns the
+unchanged payload for the unrequested kind during a scoped manual import. The
+combined Manager M3U/XMLTV output and other IPTV providers remain Manager-owned.
+Requests are consumed after the EPG callback, expire if abandoned, and cannot
+replace an active request. Imports without a scoped request refresh both kinds.
+The hourly Odido service uses this same silent request path without UI or playback.
+
+209 tests pass, including actual paired callback production for both split modes,
+unchanged saved-payload bytes, no EPG requests for channels-only, manual cache
+bypass, request cleanup and preservation of the original guide fetch timestamp.
+Live Kodi UI, cross-add-on scheduling and native PVR reload still need device
+verification.
+
 ## 0.2.6 background guide refresh (2026-10-23)
 
 Checked IPTV Manager's current [background service](https://github.com/add-ons/service.iptv.manager/blob/master/resources/lib/service.py),
