@@ -1,4 +1,4 @@
-"""Keep the Odido session alive only during playback started by this addon."""
+"""Refresh the native guide in the background and maintain Odido playback."""
 import time
 import threading
 
@@ -9,6 +9,7 @@ import xbmcvfs
 
 from resources.lib.api import Client, OdidoError
 from resources.lib.relay import PROPERTY as RELAY_PROPERTY, Server
+from resources.lib.background import GuideRefresh
 
 PROPERTY = 'plugin.video.odidotv.manifest'
 
@@ -21,7 +22,10 @@ def is_our_playback(playing, filename, manifest):
 def run():
     monitor, player = xbmc.Monitor(), xbmc.Player()
     window = xbmcgui.Window(10000)
-    profile = xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
+    addon = xbmcaddon.Addon()
+    profile = xbmcvfs.translatePath(addon.getAddonInfo('profile'))
+    guide = GuideRefresh(profile, addon, xbmcaddon.Addon,
+                         lambda identifier: xbmc.getCondVisibility('System.AddonIsEnabled(%s)' % identifier))
     window.clearProperty(RELAY_PROPERTY)
     def report(code):
         window.setProperty('plugin.video.odidotv.last_playback_error', code)
@@ -33,6 +37,11 @@ def run():
     last = 0
     try:
         while not monitor.abortRequested():
+            try:
+                guide.tick()
+            except Exception:
+                # Isolate guide maintenance from playback and relay ownership.
+                xbmc.log('[plugin.video.odidotv] GUIDE_REFRESH_FAILED', xbmc.LOGWARNING)
             try:
                 manifest = window.getProperty(PROPERTY)
                 playing = player.isPlayingVideo()

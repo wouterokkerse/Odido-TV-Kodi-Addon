@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.6
+
+* Request silent Kodi TV guide imports on startup when stale and hourly while
+  Kodi runs, without opening the Odido add-on or starting playback.
+* Reuse IPTV Manager's background service, preserve its interval and other
+  source settings, and respect active imports and disabled integration.
+* Renew saved login sessions before background guide requests.
+* Retry failed exports after 15 minutes and add an automatic-refresh toggle.
+
 ## 0.2.5
 
 * Remember the TV customer number and PIN locally after successful sign-in.

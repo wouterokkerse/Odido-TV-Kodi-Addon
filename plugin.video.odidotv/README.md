@@ -210,8 +210,22 @@ provider-rejected group. Today's guide is cached for 15 minutes, tomorrow for an
 hour and past days for a day; old files outside the configured window are pruned.
 A failed channel retains its previously cached schedule when available. Refresh
 stops further provider requests on network failure, retains cached data and
-records the safe error code. Expired/auth-refused sessions require signing in
-through the addon; background refresh never opens credential prompts.
+records the safe error code. Expired sessions are renewed using saved login
+details; background refresh never opens credential prompts.
+
+Since 0.2.6, **Refresh the Kodi TV guide automatically** is enabled by default
+under **Kodi TV / IPTV Manager**. The Odido service checks after a one-minute
+startup delay and requests a silent Manager import when the last successful
+guide export is at least an hour old or missing. Opening the Odido add-on or
+starting playback is not required. Failed imports are retried after 15 minutes;
+imports already in progress are allowed to finish. Kodi must be running, the
+Kodi TV integration and both IPTV Manager and IPTV Simple must be enabled, and
+you must have signed in once. Sign-out stops these automatic requests.
+
+Manager writes the combined playlist and guide for all enabled IPTV sources and
+uses its existing PVR reload behavior, which can defer reload during TV playback.
+Its configured refresh interval and other sources' settings are preserved.
+Restart Kodi once after installing this update to load the updated service.
 
 IPTV Manager's callback connection opens **before** loading the catalogue/guide,
 meeting its initial connection timeout. Versioned JSON is sent with a complete
@@ -225,7 +239,7 @@ If importing fails, use **Export diagnostics** in Odido TV and inspect
 `IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
 retain their safe stage code. No raw responses or exception messages are logged.
 
-All 163 unit tests pass. A separate compatibility check ran these payloads through
+All 187 unit tests pass. A separate compatibility check ran these payloads through
 IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
 catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
 could not be run in this workspace; they require testing on your Kodi device.

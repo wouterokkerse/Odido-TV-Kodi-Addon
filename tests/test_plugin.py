@@ -129,6 +129,33 @@ class PluginTests(unittest.TestCase):
         plugin.client.channel_rows.assert_not_called()
         plugin.dialog.input.assert_not_called()
 
+    def test_epg_callback_renews_login_without_opening_dialogs(self):
+        from resources.lib import plugin as module
+        plugin = self.plugin('?action=iptv_epg&port=23456')
+        plugin.addon.getSetting.side_effect = lambda key: {'iptv.enabled': 'true', 'iptv.days': '7'}.get(key, '')
+        with patch.object(module, 'send_iptv') as sender, patch.object(module, 'Exporter') as exporter:
+            exporter.return_value.epg.return_value = {'version': 1, 'epg': {}}
+            exporter.return_value.errors = []
+            plugin.dispatch()
+            sender.call_args.args[2]()
+        plugin.client.heartbeat.assert_called_once()
+        plugin.dialog.input.assert_not_called()
+        plugin.dialog.ok.assert_not_called()
+
+    def test_epg_preflight_network_failure_still_exports_cached_guide(self):
+        from resources.lib import plugin as module
+        from resources.lib.api import OdidoError
+        plugin = self.plugin('?action=iptv_epg&port=23456')
+        plugin.addon.getSetting.side_effect = lambda key: {'iptv.enabled': 'true', 'iptv.days': '7'}.get(key, '')
+        plugin.client.heartbeat.side_effect = OdidoError('NETWORK_ERROR')
+        with patch.object(module, 'send_iptv') as sender, patch.object(module, 'Exporter') as exporter:
+            exporter.return_value.epg.return_value = {'version': 1, 'epg': {'odido.18': []}}
+            exporter.return_value.errors = ['NETWORK_ERROR']
+            plugin.dispatch()
+            result = sender.call_args.args[2]()
+        self.assertIn('odido.18', result['epg'])
+        plugin.dialog.ok.assert_not_called()
+
     def test_iptv_refresh_persists_discovery_before_running_manager(self):
         from unittest.mock import call
         plugin = self.plugin('?action=iptv_refresh')
@@ -449,6 +476,19 @@ class PluginTests(unittest.TestCase):
         self.assertTrue(service.is_our_playback(True, 'https://cdn.example/a.mpd', 'https://cdn.example/a.mpd'))
         self.assertFalse(service.is_our_playback(True, 'https://other.example/b.mpd', 'https://cdn.example/a.mpd'))
         self.assertFalse(service.is_our_playback(False, '', 'https://cdn.example/a.mpd'))
+
+    def test_service_runs_guide_maintenance_without_opening_addon_or_playing(self):
+        spec = importlib.util.spec_from_file_location('odido_service', ROOT / 'plugin.video.odidotv/service.py')
+        service = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(service)
+        self.kodi.Monitor.return_value.abortRequested.return_value = False
+        self.kodi.Monitor.return_value.waitForAbort.return_value = True
+        self.kodi.Player.return_value.isPlayingVideo.return_value = False
+        with patch.object(service, 'GuideRefresh') as guide, patch.object(service, 'Server'), patch.object(service.threading, 'Thread'):
+            service.run()
+            guide.return_value.tick.assert_called_once()
+        self.gui.Dialog.assert_not_called()
+        self.kodi.executebuiltin.assert_not_called()
 
 
 if __name__ == '__main__':

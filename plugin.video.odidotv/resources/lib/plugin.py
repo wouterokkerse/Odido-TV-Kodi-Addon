@@ -240,6 +240,15 @@ class Plugin:
                 status['phase'] = 'disabled'
                 save_status()
                 return {'version': 1, 'streams': []} if kind == 'channels' else {'version': 1, 'epg': {}}
+            if kind == 'epg':
+                # Validate/renew an expired saved session before guide requests.
+                # Background imports must never open sign-in dialogs.
+                try:
+                    self.client.heartbeat()
+                except OdidoError:
+                    if not self.client.logged_in:
+                        raise
+                    # A temporary outage must still allow cached EPG export.
             exporter = Exporter(self.client, selection(self.addon.getSetting('iptv.selected')),
                                 cancelled=xbmc.Monitor().abortRequested)
             if kind == 'channels':

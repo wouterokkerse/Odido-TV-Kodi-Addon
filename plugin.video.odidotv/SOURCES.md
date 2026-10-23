@@ -1,5 +1,22 @@
 # Provider and playback references
 
+## 0.2.6 background guide refresh (2026-10-23)
+
+Checked IPTV Manager's current [background service](https://github.com/add-ons/service.iptv.manager/blob/master/resources/lib/service.py),
+[refresh function](https://github.com/add-ons/service.iptv.manager/blob/master/resources/lib/functions.py)
+and [import implementation](https://github.com/add-ons/service.iptv.manager/blob/master/resources/lib/modules/addon.py).
+The service polls `last_refreshed` plus `refresh_interval` every 30 seconds and
+calls `Addon.refresh()` silently; the script's `refresh` action instead opens
+progress and settings. Odido therefore marks Manager's timestamp due when its
+own guide export is stale, without changing Manager's configured interval.
+Manager writes combined output for all enabled sources and handles deferred PVR
+reload. The Odido startup service runs this check independently of playback.
+
+187 unit tests pass, including startup grace, hourly refresh, retry throttling,
+disabled dependencies, active imports, saved login and service execution without
+playback. The package validates successfully. Actual cross-add-on timestamp
+notification, guide import and native PVR reload still need Kodi device testing.
+
 Checked on 2026-10-17 through connected GitHub tools. No user credentials were
 included in tools, source, tests or archives during this playback update.
 

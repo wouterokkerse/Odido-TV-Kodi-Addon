@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 
 STRINGS = {
+30099: ('Refresh the Kodi TV guide automatically', 'Kodi TV-gids automatisch verversen'),
+30100: ('Refreshes hourly while Kodi is running; no need to open Odido TV.', 'Ververst elk uur zolang Kodi actief is; Odido TV openen is niet nodig.'),
 30093: ('Enable TV start button (Estuary copy)', 'TV-startknop inschakelen (Estuary-kopie)'),
 30094: ('Preparing an Estuary copy with the TV buffer-start button...', 'Estuary-kopie met TV-bufferstartknop voorbereiden...'),
 30095: ('Restore standard Estuary', 'Standaard Estuary herstellen'),

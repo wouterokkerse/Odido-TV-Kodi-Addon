@@ -10,6 +10,8 @@
   </category>
   <category label="30060">
     <setting id="iptv.enabled" type="bool" label="30061" default="false"/>
+    <setting id="iptv.auto_refresh" type="bool" label="30099" default="true"/>
+    <setting type="lsep" label="30100"/>
     <setting id="iptv.channels_uri" default="plugin://plugin.video.odidotv/?action=iptv_channels" visible="false"/>
     <setting id="iptv.epg_uri" default="plugin://plugin.video.odidotv/?action=iptv_epg" visible="false"/>
     <setting id="iptv.selected" default="" visible="false"/>

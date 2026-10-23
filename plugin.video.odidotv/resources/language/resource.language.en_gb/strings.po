@@ -2,6 +2,14 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgctxt "#30099"
+msgid "Refresh the Kodi TV guide automatically"
+msgstr ""
+
+msgctxt "#30100"
+msgid "Refreshes hourly while Kodi is running; no need to open Odido TV."
+msgstr ""
+
 msgctxt "#30093"
 msgid "Enable TV start button (Estuary copy)"
 msgstr ""
