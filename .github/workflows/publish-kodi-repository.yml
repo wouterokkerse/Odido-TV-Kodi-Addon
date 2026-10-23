@@ -1,0 +1,69 @@
+name: Build and publish Kodi repository
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kodi-repository-${{ github.event_name == 'pull_request' && github.ref || 'publish' }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -q
+      - name: Validate and build add-on and repository
+        run: |
+          python scripts/build.py
+          python scripts/build_repository.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kodi-packages
+          path: dist/
+
+  publish:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@v4
+        with:
+          ref: kodi-repository
+          path: repository
+          fetch-depth: 1
+      - name: Build and update feed, preserving existing packages
+        run: |
+          python source/scripts/build.py
+          python source/scripts/build_repository.py --output repository
+      - name: Publish repository branch
+        working-directory: repository
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .
+          if git diff --cached --quiet; then
+            echo 'Repository is already current.'
+            exit 0
+          fi
+          git commit -m "Publish Kodi packages from ${GITHUB_SHA}"
+          git push origin HEAD:kodi-repository

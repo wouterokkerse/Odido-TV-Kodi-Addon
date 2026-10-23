@@ -1,4 +1,38 @@
-# Odido TV for Kodi — 0.2.4 native TV start button
+# Odido TV for Kodi
+
+## Install once, update inside Kodi
+
+Download [repository.odidotv-1.0.0.zip](https://raw.githubusercontent.com/wouterokkerse/Odido-TV-Kodi-Addon/kodi-repository/repository.odidotv/repository.odidotv-1.0.0.zip).
+In Kodi, enable **Settings → System → Add-ons → Unknown sources** if needed,
+then choose **Add-ons → Install from zip file** and select the downloaded file.
+Next choose **Install from repository → Odido TV Repository → Video add-ons →
+Odido TV (unofficial) → Install**. For an existing ZIP installation, install or
+update Odido TV from this repository once; the same add-on ID preserves your
+saved login and settings. Enable **Auto-update** on the Odido TV information
+screen and set Kodi's add-on updates to **Install updates automatically**.
+If Kodi's update-source setting restricts updates to official repositories,
+allow updates from other repositories for this add-on.
+
+The feed is hosted on the `kodi-repository` branch of this GitHub repository;
+no separate account, access token or GitHub Pages setup is needed in Kodi.
+Kodi checks it periodically; **Check for updates** can request a check sooner.
+Kodi and this repository add-on must remain enabled for automatic updates.
+
+### Publishing a new version
+
+Increase `version` in `plugin.video.odidotv/addon.xml` whenever changing files
+included in the add-on package, including its bundled README/SOURCES. Commit and
+push to `master`. The **Build and publish Kodi repository** workflow runs tests,
+validates and builds the ZIP, then publishes `addons.xml`, its MD5 change marker,
+and versioned packages to `kodi-repository` using GitHub's built-in token.
+Pull requests only validate; they do not publish. Workflow dispatch can retry a
+publication. Existing versioned packages are kept, and changed bytes under an
+existing version or a version downgrade are rejected. Do not edit the generated
+branch manually. The repository installer only needs a version bump when its
+own files change.
+
+For local validation: run `python -m unittest discover -s tests -q`,
+`python scripts/build.py`, then `python scripts/build_repository.py`.
 
 A standalone, unofficial Odido TV addon targeting **Kodi 21.2**.
 
@@ -239,7 +273,7 @@ If importing fails, use **Export diagnostics** in Odido TV and inspect
 `IPTV_INVALID_SELECTION` means reset/select channels again. Other provider errors
 retain their safe stage code. No raw responses or exception messages are logged.
 
-All 187 unit tests pass. A separate compatibility check ran these payloads through
+All 194 unit tests pass. A separate compatibility check ran these payloads through
 IPTV Manager's actual M3U/XMLTV writers and verified matching channel IDs and replay
 catchup links. Full socket-based callback delivery and Kodi PVR/Widevine playback
 could not be run in this workspace; they require testing on your Kodi device.

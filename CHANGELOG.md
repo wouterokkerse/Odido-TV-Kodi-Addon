@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.7
+
+* Add an installable Odido TV Kodi repository for updates inside Kodi.
+* Test, build and publish the repository feed automatically on pushes to master.
+* Preserve versioned ZIPs and reject changed packages without a version bump.
+
 ## 0.2.6
 
 * Request silent Kodi TV guide imports on startup when stale and hourly while
